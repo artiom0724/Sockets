@@ -35,7 +35,7 @@ namespace ClientSocket.Services
 
         private ActionResult UploadFileTCP(string fileName, string[] parameters)
         {
-            long timeAvait = 0;
+            long timeAwait = 0;
             var packetNumber = 0;
             var file = File.OpenRead(fileName);
             var uploaded = int.Parse(parameters[0]);
@@ -46,8 +46,8 @@ namespace ClientSocket.Services
             };
             if(uploaded != 0)
             {
-                timeAvait = ContinueUploading(file);
-                if (timeAvait != 0)
+                timeAwait = ContinueUploading(file);
+                if (timeAwait != 0)
                 {
                     fileModel.Packets.Add(new PacketModel()
                     {
@@ -73,7 +73,7 @@ namespace ClientSocket.Services
             return new ActionResult()
             {
                 FileSize = file.Length,
-                TimeAwait = timeAvait
+                TimeAwait = timeAwait
             };
         }
 
@@ -100,13 +100,13 @@ namespace ClientSocket.Services
 
         private long ContinueUploading(FileStream file)
         {
-            long timeAvait;
+            long timeAwait;
             Console.WriteLine("File exist in current upload directory.\n" +
               "If it's not one file, after it'll be crashed. Continue uploading?[y\\n]\n");
             var time = DateTime.Now;
             var isContinue = Console.ReadLine().Contains("y");
-            timeAvait = (DateTime.Now - time).Milliseconds;
-            return isContinue? timeAvait : 0;
+            timeAwait = (DateTime.Now - time).Milliseconds;
+            return isContinue? timeAwait : 0;
         }
 
         private ActionResult UploadFileUDP(string fileName)

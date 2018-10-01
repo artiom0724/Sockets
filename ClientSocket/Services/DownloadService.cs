@@ -37,7 +37,7 @@ namespace ClientSocket.Services
 
         public ActionResult DownloadFileTCP(string fileName, string[] parameters)
         {
-            long timeAvait = 0;
+            long timeAwait = 0;
             var file = File.OpenWrite(fileName);
             var data = new byte[1024];
             var fileModel = new FileModel()
@@ -47,8 +47,8 @@ namespace ClientSocket.Services
             };
             if (file.Length > 0 && file.Length < fileModel.Size)
             {
-                timeAvait = ContinueDownloading(file);
-                if (timeAvait == 0)
+                timeAwait = ContinueDownloading(file);
+                if (timeAwait == 0)
                 {
                     socket.Send(Encoding.ASCII.GetBytes($"break|"));
                     return new ActionResult();
@@ -69,18 +69,18 @@ namespace ClientSocket.Services
             return new ActionResult()
             {
                 FileSize = fileModel.Size,
-                TimeAwait = timeAvait
+                TimeAwait = timeAwait
             };
         }
 
         private long ContinueDownloading(FileStream file)
         {
-            long timeAvait;
+            long timeAwait;
             Console.WriteLine("File exist in current download directory.\n" +
               "If it's not one file, then it'll be crashed. Continue downloading?[y\\n]\n");
             var time = DateTime.Now;
             var isContinue = Console.ReadLine().Contains("y");
-            timeAvait = (DateTime.Now - time).Milliseconds;
+            timeAwait = (DateTime.Now - time).Milliseconds;
             if (isContinue)
             {
                 file.Seek(file.Length, SeekOrigin.Begin);
@@ -90,7 +90,7 @@ namespace ClientSocket.Services
                 return 0;
             }
 
-            return timeAvait;
+            return timeAwait;
         }
 
         private void DownloadingProcess(FileStream file, FileModel fileModel)
