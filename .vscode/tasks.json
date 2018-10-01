@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "buildClient",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/ClientSocket/ClientSocket.csproj",
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "buildServer",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/ServerSocket/ServerSocket.csproj",
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}
