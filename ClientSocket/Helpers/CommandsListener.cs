@@ -110,7 +110,7 @@ namespace ClientSocket.Helpers
             Console.WriteLine("connect [ip*] [port*] - for connect to socket");
             Console.WriteLine("disconnect - for disconnect to socket");
             Console.WriteLine("download [filename*] [type] - download file from server");
-            Console.WriteLine("upload [filename*] [type] - for connect to socket");
+            Console.WriteLine("upload [filename*] [type] - upload file to server");
             Console.WriteLine("help - for getting help manual");
             Console.WriteLine("P.s. '*' - required parameter");
         }
