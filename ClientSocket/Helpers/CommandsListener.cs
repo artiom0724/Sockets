@@ -65,14 +65,14 @@ namespace ClientSocket.Helpers
 
         private void ConnectMethod(List<string> splittedCommand)
         {
-            Console.WriteLine("Connected");
             socketWorker.ConnectSocket(splittedCommand[1], splittedCommand[2], splittedCommand.Count > 2 ? splittedCommand[3] : "tcp");
+            Console.WriteLine("Connected");
         }
 
         private void DisconnectMethod()
         {
-            Console.WriteLine("Disconnected");
             socketWorker.DisconnectSocket();
+            Console.WriteLine("Disconnected");
         }
 
         private void UploadMethod(List<string> splittedCommand)
