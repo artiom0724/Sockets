@@ -66,7 +66,7 @@ namespace ClientSocket.Helpers
         private void ConnectMethod(List<string> splittedCommand)
         {
             Console.WriteLine("Connected");
-            socketWorker.ConnectSocket(splittedCommand[1], splittedCommand[2]);
+            socketWorker.ConnectSocket(splittedCommand[1], splittedCommand[2], splittedCommand.Count > 2 ? splittedCommand[3] : "tcp");
         }
 
         private void DisconnectMethod()
@@ -79,7 +79,7 @@ namespace ClientSocket.Helpers
         {
             Console.WriteLine("Uploading start...");
             var time = DateTime.Now;
-            var actionResult = socketWorker.UploadFile(splittedCommand[1], splittedCommand.Count >= 3 ? splittedCommand[2] : "tcp");
+            var actionResult = socketWorker.UploadFile(splittedCommand[1]);
             if (actionResult.FileSize == 0)
             {
                 Console.WriteLine("Error file. Uploading breaking");
@@ -94,7 +94,7 @@ namespace ClientSocket.Helpers
         {
             Console.WriteLine("Downloading start...");
             var time = DateTime.Now;
-            var actionResult = socketWorker.DownloadFile(splittedCommand[1], splittedCommand.Count >= 3 ? splittedCommand[2] : "tcp");
+            var actionResult = socketWorker.DownloadFile(splittedCommand[1]);
             if (actionResult.FileSize == 0)
             {
                 Console.WriteLine("Error file. Downloading breaking");
@@ -107,10 +107,10 @@ namespace ClientSocket.Helpers
 
         private void WriteHelpManual()
         {
-            Console.WriteLine("connect [ip*] [port*] - for connect to socket");
+            Console.WriteLine("connect [ip*] [port*] [type]- for connect to socket");
             Console.WriteLine("disconnect - for disconnect to socket");
-            Console.WriteLine("download [filename*] [type] - download file from server");
-            Console.WriteLine("upload [filename*] [type] - upload file to server");
+            Console.WriteLine("download [filename*] - download file from server");
+            Console.WriteLine("upload [filename*] - upload file to server");
             Console.WriteLine("help - for getting help manual");
             Console.WriteLine("P.s. '*' - required parameter");
         }

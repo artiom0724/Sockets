@@ -16,21 +16,18 @@ namespace ServerSocket.Sevices
     {
         private Socket socket;
 
-        private Socket socketUDP;
-
         private EndPoint endPoint;
 
-        public void DownloadFile(Socket socket, Socket socketUDP, EndPoint endPoint, ServerCommand command)
+        public void DownloadFile(Socket socket, EndPoint endPoint, ServerCommand command)
         {
             this.socket = socket;
-            this.socketUDP = socketUDP;
             this.endPoint = endPoint;
-            switch (command.Parameters[1])
+            switch (socket.ProtocolType)
             {
-                case "tcp":
+                case ProtocolType.Tcp:
                     DownloadFileTCP(command);
                     return;
-                case "udp":
+                case ProtocolType.Udp:
                     DownloadFileUDP(command);
                     return;
             }
@@ -163,7 +160,7 @@ namespace ServerSocket.Sevices
                 }
                 var infoPackets = incomingString.Split("|").Select(x => long.Parse(x));
                 fileModel.Packets.RemoveAll(x => infoPackets.Contains(x.Number));
-            } while (socketUDP.Available != 0);
+            } while (socket.Available != 0);
             foreach (var packet in fileModel.Packets)
             {
                 var data = new byte[1024];
@@ -171,7 +168,7 @@ namespace ServerSocket.Sevices
                 data.InsertInStartArray(info);
                 file.Seek(packet.FilePosition, SeekOrigin.Begin);
                 file.Read(data, info.Length, data.Length - info.Length);
-                socketUDP.SendTo(data, endPoint);
+                socket.SendTo(data, endPoint);
                 fileModel.Packets.Add(packet);
                 Console.Clear();
                 Console.WriteLine("Resending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
@@ -192,7 +189,7 @@ namespace ServerSocket.Sevices
             packetNumber++;
             data.InsertInStartArray(info);
             file.Read(data, info.Length, data.Length - info.Length);
-            socketUDP.SendTo(data, endPoint);
+            socket.SendTo(data, endPoint);
             fileModel.Packets.Add(packet);
             Console.Clear();
             Console.WriteLine("Sending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");

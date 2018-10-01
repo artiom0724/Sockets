@@ -16,14 +16,11 @@ namespace ServerSocket.Sevices
     {
         private Socket socket;
 
-        private Socket socketUDP;
-
         private EndPoint endPoint;
 
-        public void UploadFile(Socket socket, Socket socketUDP, EndPoint endPoint, ServerCommand command)
+        public void UploadFile(Socket socket, EndPoint endPoint, ServerCommand command)
         {
             this.socket = socket;
-            this.socketUDP = socketUDP;
             this.endPoint = endPoint;
             switch (command.Parameters[1])
             {
@@ -108,12 +105,12 @@ namespace ServerSocket.Sevices
             do
             {
                 FirstDataGetting(file, fileModel);
-            } while (socketUDP.Available != 0);
+            } while (socket.Available != 0);
             while (fileModel.Size < fileModel.Packets.Sum(x => x.Size))
             {
                 RegettingMissingPackets(file, fileModel);
             }
-            socketUDP.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
+            socket.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
         }
 
         private void RegettingMissingPackets(FileStream file, FileModel fileModel)
@@ -130,13 +127,13 @@ namespace ServerSocket.Sevices
             do
             {
                 GettingMissingPackets(file, fileModel);
-            } while (socketUDP.Available != 0);
+            } while (socket.Available != 0);
         }
 
         private void GettingMissingPackets(FileStream file, FileModel fileModel)
         {
             var data = new byte[1024];
-            socketUDP.ReceiveFrom(data, ref endPoint);
+            socket.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
             var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
@@ -169,13 +166,13 @@ namespace ServerSocket.Sevices
                 offset += number.Length;
                 camingPackets.Remove(number);
             }
-            socketUDP.SendTo(data, endPoint);
+            socket.SendTo(data, endPoint);
         }
 
         private void FirstDataGetting(FileStream file, FileModel fileModel)
         {
             var data = new byte[1024];
-            socketUDP.ReceiveFrom(data, ref endPoint);
+            socket.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
             var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();

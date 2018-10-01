@@ -8,9 +8,9 @@ namespace ServerSocket.Helpers
 {
     public class SocketWorker
     {
-        private Socket socket;
+        public string SelectedProtocolType { get; set; }
 
-        private Socket socketUDP;
+        private Socket socket;
 
         private CommandParser commandParser = new CommandParser();
 
@@ -25,17 +25,14 @@ namespace ServerSocket.Helpers
             {
                 try
                 {
-                    CreateSocket();
-                    CreateUDPSocket();
+                    CreateSocket(SelectedProtocolType == "udp"? ProtocolType.Udp: ProtocolType.Tcp);
                     MonitorPort();
                     socket.Close();
-                    socketUDP.Close();
                     Console.WriteLine("Disconnect");
                 }
                 catch (Exception exc)
                 {
                     socket.Close();
-                    socketUDP.Close();
                     Console.WriteLine(exc.Message);
                 }
             }
@@ -46,7 +43,6 @@ namespace ServerSocket.Helpers
             while (true)
             {
                 Socket handler = socket.Accept();
-                Socket handlerUDP = socket.Accept();
                 while (handler.Connected)
                 {
                     StringBuilder builder = new StringBuilder();
@@ -62,7 +58,8 @@ namespace ServerSocket.Helpers
                     }
                     while (handler.Connected && !builder.ToString().Contains("\r\n"));
                     var commandString = builder.ToString();
-                    commandExecuter.ExecuteCommand(handler, handlerUDP, commandParser.ParseCommand(commandString), endPoint);
+                    
+                    commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), endPoint);
 
                     if (!handler.Connected)
                     {
@@ -72,18 +69,11 @@ namespace ServerSocket.Helpers
             }
         }
 
-        private void CreateSocket()
+        private void CreateSocket(ProtocolType type)
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, type);
             socket.Bind(endPoint);
             socket.Listen(10);
-        }
-
-        private void CreateUDPSocket()
-        {
-            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
-            socketUDP.Bind(endPoint);
-            socketUDP.Listen(10);
         }
     }
 }

@@ -10,21 +10,16 @@ namespace ClientSocket.Services
     {
         private Socket socket;
 
-        private Socket socketUDP;
-
         private DownloadService downloadService = new DownloadService();
 
         private UploadService uploadService = new UploadService();
 
         private EndPoint endPoint;
 
-        public void ConnectSocket(string ip, string port)
+        public void ConnectSocket(string ip, string port, string protocolType)
         {
             endPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port));
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(endPoint);
-
-            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, protocolType == "udp" ? ProtocolType.Udp : ProtocolType.Tcp);
             socket.Connect(endPoint);
         }
 
@@ -33,24 +28,24 @@ namespace ClientSocket.Services
             socket.Close();
         }
 
-        public ActionResult DownloadFile(string fileName, string downloadingType)
+        public ActionResult DownloadFile(string fileName)
         {
-            var parameters = GetParameters($"client_download {fileName} {downloadingType}\r\n");
+            var parameters = GetParameters($"client_download {fileName}\r\n");
             if(parameters.Contains("Error"))
             {
                 return new ActionResult();
             }
-            return downloadService.DownloadFile(fileName, downloadingType, parameters, socket, socketUDP, endPoint);
+            return downloadService.DownloadFile(fileName, parameters, socket, endPoint);
         }
 
-        public ActionResult UploadFile(string fileName, string uploadingType)
+        public ActionResult UploadFile(string fileName)
         {
-            var parameters = GetParameters($"client_upload {fileName} {uploadingType}\r\n");
+            var parameters = GetParameters($"client_upload {fileName}\r\n");
             if (parameters.Contains("Error"))
             {
                 return new ActionResult();
             }
-            return uploadService.UploadFile(fileName, uploadingType, parameters, socket, socketUDP, endPoint);
+            return uploadService.UploadFile(fileName, parameters, socket, endPoint);
         }
 
         private string[] GetParameters(string command)
