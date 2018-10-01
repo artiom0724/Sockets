@@ -34,5 +34,11 @@
             "request": "attach",
             "processId": "${command:pickProcess}"
         }
-    ,]
+    ],
+    "compounds": [
+        {
+            "name": "Server/Client",
+            "configurations": ["LaunchServer", "LaunchClient"]
+        }
+    ]
 }
