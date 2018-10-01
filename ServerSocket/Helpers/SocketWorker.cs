@@ -81,9 +81,9 @@ namespace ServerSocket.Helpers
 
         private void CreateUDPSocket()
         {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
-            socket.Bind(endPoint);
-            socket.Listen(10);
+            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Udp);
+            socketUDP.Bind(endPoint);
+            socketUDP.Listen(10);
         }
     }
 }
