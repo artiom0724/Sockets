@@ -35,7 +35,7 @@ namespace ClientSocket.Services
 
         public ActionResult DownloadFile(string fileName, string downloadingType)
         {
-            var parameters = GetParameters("client_download\r\n");
+            var parameters = GetParameters($"client_download {fileName} {downloadingType}\r\n");
             if(parameters.Contains("Error"))
             {
                 return new ActionResult();
@@ -45,7 +45,7 @@ namespace ClientSocket.Services
 
         public ActionResult UploadFile(string fileName, string uploadingType)
         {
-            var parameters = GetParameters($"client_upload {fileName}\r\n");
+            var parameters = GetParameters($"client_upload {fileName} {uploadingType}\r\n");
             if (parameters.Contains("Error"))
             {
                 return new ActionResult();

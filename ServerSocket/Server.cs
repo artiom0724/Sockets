@@ -15,7 +15,7 @@ namespace ServerSocket
 
         private SocketWorker socketWorker = new SocketWorker();
 
-        public bool StartServer(int portNum)
+        public bool StartServer()
         {
             if (running)
             {
