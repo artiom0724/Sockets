@@ -154,7 +154,7 @@ namespace ServerSocket.Sevices
             do
             {
                 var infoCaming = new byte[4096];
-                if (socket.Poll(20000, SelectMode.SelectRead))
+                if (socket.Poll(20000, SelectMode.SelectError))
                 {
                     throw new SocketException((int)SocketError.ConnectionReset);
                 }

@@ -94,7 +94,7 @@ namespace ClientSocket.Services
         private void DownloadingProcess(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectRead))
+            if (socket.Poll(20000, SelectMode.SelectError))
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }
@@ -180,7 +180,7 @@ namespace ClientSocket.Services
         private void GettingMissingPackets(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectRead))
+            if (socket.Poll(20000, SelectMode.SelectError))
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }
@@ -227,7 +227,7 @@ namespace ClientSocket.Services
         private void FirstDataGetting(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectRead))
+            if (socket.Poll(20000, SelectMode.SelectError))
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }

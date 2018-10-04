@@ -45,7 +45,7 @@ namespace ServerSocket.Sevices
             if (file.Length > 0)
             {
                 socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
-                if (socket.Poll(20000, SelectMode.SelectRead))
+                if (socket.Poll(20000, SelectMode.SelectError))
                 {
                     throw new SocketException((int)SocketError.ConnectionReset);
                 }
@@ -80,7 +80,7 @@ namespace ServerSocket.Sevices
         private void GettingProcess(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectRead))
+            if (socket.Poll(20000, SelectMode.SelectError))
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }
@@ -148,7 +148,7 @@ namespace ServerSocket.Sevices
         private void GettingMissingPackets(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectRead))
+            if (socket.Poll(20000, SelectMode.SelectError))
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }
@@ -191,7 +191,7 @@ namespace ServerSocket.Sevices
         private void FirstDataGetting(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectRead))
+            if (socket.Poll(20000, SelectMode.SelectError))
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }

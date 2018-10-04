@@ -51,7 +51,7 @@ namespace ServerSocket.Helpers
 
                     do
                     {
-                        if(handler.Poll(20000, SelectMode.SelectRead))
+                        if(handler.Poll(20000, SelectMode.SelectError))
                         {
                             throw new SocketException((int)SocketError.ConnectionReset);
                         }
