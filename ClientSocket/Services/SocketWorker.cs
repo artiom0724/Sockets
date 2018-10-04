@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -25,7 +26,9 @@ namespace ClientSocket.Services
 
         public void DisconnectSocket()
         {
+            socket.Shutdown(SocketShutdown.Both);
             socket.Close();
+            socket.Dispose();
         }
 
         public ActionResult DownloadFile(string fileName)
@@ -40,7 +43,9 @@ namespace ClientSocket.Services
 
         public ActionResult UploadFile(string fileName)
         {
-            var parameters = GetParameters($"client_upload {fileName}\r\n");
+            var file = File.OpenRead(fileName);
+            var parameters = GetParameters($"client_upload {fileName} {file.Length}\r\n");
+            file.Close();
             if (parameters.Contains("Error"))
             {
                 return new ActionResult();
@@ -51,7 +56,11 @@ namespace ClientSocket.Services
         private string[] GetParameters(string command)
         {
             socket.Send(Encoding.ASCII.GetBytes(command));
-            var data = new byte[1024];
+            var data = new byte[4096];
+            if (socket.Poll(20000, SelectMode.SelectRead))
+            {
+                throw new SocketException((int)SocketError.ConnectionReset);
+            }
             socket.Receive(data);
             var incomingString = Encoding.ASCII.GetString(data);
             var parameters = incomingString.Split('|');

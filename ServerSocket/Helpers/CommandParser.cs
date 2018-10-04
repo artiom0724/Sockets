@@ -13,7 +13,7 @@ namespace ServerSocket.Helpers
         public ServerCommand ParseCommand(string commandString)
         {
             var resCommand = new ServerCommand();
-            var command = commandString.Split().FirstOrDefault();
+            var command = commandString.Split(" ").FirstOrDefault();
             var rest = String.Join(" ", commandString.Split(" ").Skip(1));
             resCommand.Parameters = SplitCommandLine(rest);
             switch (command)

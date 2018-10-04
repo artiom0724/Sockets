@@ -84,7 +84,7 @@ namespace ServerSocket.Sevices
         {
             var parameters = Encoding.ASCII.GetBytes($"{file.Length}|");
             socket.Send(parameters);
-            var data = new byte[1024];
+            var data = new byte[4096];
             socket.Receive(data);
             var incomingString = Encoding.ASCII.GetString(data);
             return incomingString;
@@ -92,7 +92,7 @@ namespace ServerSocket.Sevices
 
         private long SendingProcess(FileStream file, FileModel fileModel, long packetNumber)
         {
-            var data = new byte[1024];
+            var data = new byte[4096];
             var info = Encoding.ASCII.GetBytes($"{packetNumber}|{file.Position}|");
             var packet = new PacketModel()
             {
@@ -105,8 +105,7 @@ namespace ServerSocket.Sevices
             file.Read(data, info.Length, data.Length - info.Length);
             socket.Send(data);
             fileModel.Packets.Add(packet);
-            Console.Clear();
-            Console.WriteLine("Sending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.WriteLine("\rSending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
 
@@ -121,15 +120,19 @@ namespace ServerSocket.Sevices
                     FileName = file.Name,
                     Size = file.Length
                 };
-                long packetNumber = 0;
-
-                while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length)
+                long packetNumber = 0, partCamingPackets = 0;
+                while (file.Length > fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size))
                 {
-                    packetNumber = FirstSending(file, fileModel, packetNumber);
-                }
-                while (fileModel.Packets.Any())
-                {
-                    ResendingMissingPackets(file, fileModel);
+                    while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partCamingPackets < 64)
+                    {
+                        packetNumber = FirstSending(file, fileModel, packetNumber);
+                        partCamingPackets++;
+                    }
+                    partCamingPackets = 0;
+                    while (fileModel.Packets.Any(x=>x.IsCame == false))
+                    {
+                        ResendingMissingPackets(file, fileModel);
+                    }
                 }
             }
             catch (FileNotFoundException ex)
@@ -150,8 +153,13 @@ namespace ServerSocket.Sevices
         {
             do
             {
-                var infoCaming = new byte[1024];
+                var infoCaming = new byte[4096];
+                if (socket.Poll(20000, SelectMode.SelectRead))
+                {
+                    throw new SocketException((int)SocketError.ConnectionReset);
+                }
                 socket.ReceiveFrom(infoCaming, ref endPoint);
+
                 var incomingString = Encoding.ASCII.GetString(infoCaming);
                 if (incomingString.Contains("Correct"))
                 {
@@ -159,25 +167,27 @@ namespace ServerSocket.Sevices
                     return;
                 }
                 var infoPackets = incomingString.Split("|").Select(x => long.Parse(x));
-                fileModel.Packets.RemoveAll(x => infoPackets.Contains(x.Number));
+                foreach(var packet in fileModel.Packets.Where(x => infoPackets.Contains(x.Number)))
+                {
+                    packet.IsCame = true;
+                }
             } while (socket.Available != 0);
-            foreach (var packet in fileModel.Packets)
+            foreach (var packet in fileModel.Packets.Where(x=>x.IsCame == false))
             {
-                var data = new byte[1024];
+                var data = new byte[4096];
                 var info = Encoding.ASCII.GetBytes($"{packet.Number}|{packet.FilePosition}|");
                 data.InsertInStartArray(info);
                 file.Seek(packet.FilePosition, SeekOrigin.Begin);
                 file.Read(data, info.Length, data.Length - info.Length);
                 socket.SendTo(data, endPoint);
                 fileModel.Packets.Add(packet);
-                Console.Clear();
-                Console.WriteLine("Resending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
+                Console.WriteLine("\rResending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
             }
         }
 
         private long FirstSending(FileStream file, FileModel fileModel, long packetNumber)
         {
-            var data = new byte[1024];
+            var data = new byte[4096];
             var info = Encoding.ASCII.GetBytes($"{packetNumber}|{file.Position}|");
             var packet = new PacketModel()
             {
@@ -191,8 +201,7 @@ namespace ServerSocket.Sevices
             file.Read(data, info.Length, data.Length - info.Length);
             socket.SendTo(data, endPoint);
             fileModel.Packets.Add(packet);
-            Console.Clear();
-            Console.WriteLine("Sending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.WriteLine("\rSending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
     }

@@ -51,6 +51,10 @@ namespace ServerSocket.Helpers
 
                     do
                     {
+                        if(handler.Poll(20000, SelectMode.SelectRead))
+                        {
+                            throw new SocketException((int)SocketError.ConnectionReset);
+                        }
                         bytes = handler.Receive(socketData);
                         builder.Append(Encoding.ASCII.GetString(socketData, 0, bytes));
                         if (builder.ToString().Contains("\r\n"))
@@ -60,7 +64,6 @@ namespace ServerSocket.Helpers
                     var commandString = builder.ToString();
                     
                     commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), endPoint);
-
                     if (!handler.Connected)
                     {
                         break;

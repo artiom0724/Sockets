@@ -36,7 +36,7 @@ namespace ClientSocket.Services
         {
             long timeAwait = 0;
             var file = File.OpenWrite(fileName);
-            var data = new byte[1024];
+            var data = new byte[4096];
             var fileModel = new FileModel()
             {
                 FileName = file.Name,
@@ -63,6 +63,7 @@ namespace ClientSocket.Services
             {
                 DownloadingProcess(file, fileModel);
             }
+            file.Close();
             return new ActionResult()
             {
                 FileSize = fileModel.Size,
@@ -92,7 +93,11 @@ namespace ClientSocket.Services
 
         private void DownloadingProcess(FileStream file, FileModel fileModel)
         {
-            var data = new byte[1024];
+            var data = new byte[4096];
+            if (socket.Poll(20000, SelectMode.SelectRead))
+            {
+                throw new SocketException((int)SocketError.ConnectionReset);
+            }
             socket.Receive(data);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
@@ -111,9 +116,9 @@ namespace ClientSocket.Services
 
         public ActionResult DownloadFileUDP(string fileName, string[] parameters)
         {
+            var file = File.OpenWrite(fileName);
             try
             {
-                var file = File.OpenWrite(fileName);
                 var fileModel = new FileModel()
                 {
                     FileName = file.Name,
@@ -124,15 +129,22 @@ namespace ClientSocket.Services
                     File.Delete(file.Name);
                     file = File.OpenWrite(fileName);
                 }
-                do
+                long countCamingPackets = 0;
+                while (file.Length < fileModel.Size)
                 {
-                    FirstDataGetting(file, fileModel);
-                } while (socket.Available != 0);
-                while (fileModel.Size < fileModel.Packets.Sum(x => x.Size))
-                {
-                    RegettingMissingPackets(file, fileModel);
+                    do
+                    {
+                        FirstDataGetting(file, fileModel);
+                        countCamingPackets++;
+                    } while (socket.Available != 0);
+                    while (countCamingPackets == 64 && file.Length < fileModel.Size)
+                    {
+                        RegettingMissingPackets(file, fileModel, ref countCamingPackets);
+                        countCamingPackets = 0;
+                    }
+                    socket.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPoint);
                 }
-                socket.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
+                file.Close();
                 return new ActionResult()
                 {
                     FileSize = file.Length,
@@ -141,14 +153,15 @@ namespace ClientSocket.Services
             }
             catch (FileNotFoundException exc)
             {
+                file.Close();
                 Console.WriteLine(exc.Message);
                 return new ActionResult();
             }
         }
 
-        private void RegettingMissingPackets(FileStream file, FileModel fileModel)
+        private void RegettingMissingPackets(FileStream file, FileModel fileModel, ref long countCamingPackets)
         {
-            var camingPackets = fileModel.Packets.Select(x => Encoding.ASCII.GetBytes($"{x.Number.ToString()}")).ToList();
+            var camingPackets = fileModel.Packets.Select(x => Encoding.ASCII.GetBytes($"{x.Number.ToString()}|")).ToList();
             while (true)
             {
                 SendCamingPackagesNumbers(camingPackets);
@@ -160,15 +173,24 @@ namespace ClientSocket.Services
             do
             {
                 GettingMissingPackets(file, fileModel);
+                countCamingPackets++;
             } while (socket.Available != 0);
         }
 
         private void GettingMissingPackets(FileStream file, FileModel fileModel)
         {
-            var data = new byte[1024];
+            var data = new byte[4096];
+            if (socket.Poll(20000, SelectMode.SelectRead))
+            {
+                throw new SocketException((int)SocketError.ConnectionReset);
+            }
             socket.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
+            if(fileModel.Packets.Any(x=>x.Number == long.Parse(packetParameters[0])))
+            {
+                return;
+            }
             var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
             file.Seek(long.Parse(packetParameters[1]), SeekOrigin.Begin);
@@ -187,7 +209,7 @@ namespace ClientSocket.Services
         private void SendCamingPackagesNumbers(List<byte[]> camingPackets)
         {
             int offset = 0;
-            var data = new byte[1024];
+            var data = new byte[4096];
             while (true)
             {
                 var number = camingPackets.First();
@@ -204,13 +226,21 @@ namespace ClientSocket.Services
 
         private void FirstDataGetting(FileStream file, FileModel fileModel)
         {
-            var data = new byte[1024];
+            var data = new byte[4096];
+            if (socket.Poll(20000, SelectMode.SelectRead))
+            {
+                throw new SocketException((int)SocketError.ConnectionReset);
+            }
             socket.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
             if (packetParameters.First().Contains("Error"))
             {
                 throw new FileNotFoundException();
+            }
+            if (fileModel.Packets.Any(x => x.Number == long.Parse(packetParameters[0])))
+            {
+                return;
             }
             var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
@@ -223,8 +253,7 @@ namespace ClientSocket.Services
                 Number = long.Parse(packetParameters[0]),
                 FilePosition = long.Parse(packetParameters[1])
             });
-            Console.Clear();
-            Console.WriteLine("Getting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.WriteLine("\rGetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
         }
     }
 }

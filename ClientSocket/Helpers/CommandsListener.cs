@@ -107,7 +107,7 @@ namespace ClientSocket.Helpers
 
         private void WriteHelpManual()
         {
-            Console.WriteLine("connect [ip*] [port*] [type]- for connect to socket");
+            Console.WriteLine("connect [ip*] [port*] [type*]- for connect to socket");
             Console.WriteLine("disconnect - for disconnect to socket");
             Console.WriteLine("download [filename*] - download file from server");
             Console.WriteLine("upload [filename*] - upload file to server");

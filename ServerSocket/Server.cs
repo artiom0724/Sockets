@@ -1,6 +1,7 @@
 ﻿using ServerSocket.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -21,7 +22,7 @@ namespace ServerSocket
             {
                 return false;
             }
-            Console.Write("* - required parameter. \nInput <[IP-address*] [port*] [Protocol type]> for start: ");
+            Console.Write("* - required parameter. \nInput <[IP-address*] [port*] [Protocol type*]> for start: ");
             var inputData = Console.ReadLine();
             var startParameters = inputData.Split(' ');
             var ip = IPAddress.Parse(startParameters[0]);
