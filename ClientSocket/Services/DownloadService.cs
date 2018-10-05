@@ -105,7 +105,7 @@ namespace ClientSocket.Services
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
             if (fileModel.Size - file.Length < writedData.Length)
             {
-                writedData = data.SubArray(0, fileModel.Size - file.Length);
+                writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
             file.Write(writedData, 0, writedData.Length);
             fileModel.Packets.Add(new PacketModel()
@@ -198,7 +198,7 @@ namespace ClientSocket.Services
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
             if (fileModel.Size - file.Length < writedData.Length)
             {
-                writedData = data.SubArray(0, fileModel.Size - file.Length);
+                writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
             file.Seek(long.Parse(packetParameters[1]), SeekOrigin.Begin);
             file.Write(writedData, 0, writedData.Length);
@@ -252,7 +252,7 @@ namespace ClientSocket.Services
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
             if (fileModel.Size - file.Length < writedData.Length)
             {
-                writedData = data.SubArray(0, fileModel.Size - file.Length);
+                writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
             file.Seek(long.Parse(packetParameters[1]), SeekOrigin.Begin);
             file.Write(writedData, 0, writedData.Length);

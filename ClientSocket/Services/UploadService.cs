@@ -91,7 +91,9 @@ namespace ClientSocket.Services
             file.Read(data, info.Length, data.Length - info.Length);
             socket.Send(data);
             fileModel.Packets.Add(packet);
-            Console.Write("\rUploading... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            var percent = (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size);
+            percent = percent > 100 ? 100 : percent;
+            Console.Write("\rUploading... " + percent + "%\n");
             return packetNumber;
         }
 
@@ -187,7 +189,9 @@ namespace ClientSocket.Services
                 file.Read(data, info.Length, data.Length - info.Length);
                 socket.SendTo(data, endPoint);
                 fileModel.Packets.Add(packet);
-                Console.Write("\rReupload UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+                var percent = (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size);
+                percent = percent > 100 ? 100 : percent;
+                Console.Write("\rReupload UDP... " + percent + "%\n");
             }
         }
 
@@ -207,7 +211,9 @@ namespace ClientSocket.Services
             file.Read(data, info.Length, data.Length - info.Length);
             socket.SendTo(data, endPoint);
             fileModel.Packets.Add(packet);
-            Console.Write("\rUpload UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            var percent = (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size);
+            percent = percent > 100 ? 100 : percent;
+            Console.Write("\rUpload UDP... " + percent + "%\n");
             return packetNumber;
         }
 
