@@ -11,24 +11,35 @@ namespace ClientSocket.Services
     {
         private Socket socket;
 
+        private Socket socketUDP;
+
         private DownloadService downloadService = new DownloadService();
 
         private UploadService uploadService = new UploadService();
 
-        private EndPoint endPoint;
+        private DoubleEndPointModel endPointModel;
 
-        public void ConnectSocket(string ip, string port, string protocolType)
+        public void ConnectSocket(string ip, string port)
         {
-            endPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port));
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, protocolType == "udp" ? ProtocolType.Udp : ProtocolType.Tcp);
-            socket.Connect(endPoint);
+            endPointModel = new DoubleEndPointModel()
+            {
+                EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
+                EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)+1)
+            };
+            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socket.Connect(endPointModel.EndPoint);
+            socketUDP.Connect(endPointModel.EndPointUDP);
         }
 
         public void DisconnectSocket()
         {
             socket.Shutdown(SocketShutdown.Both);
+            socketUDP.Shutdown(SocketShutdown.Both);
             socket.Close();
+            socketUDP.Close();
             socket.Dispose();
+            socketUDP.Dispose();
         }
 
         public ActionResult DownloadFile(string fileName)
@@ -38,7 +49,7 @@ namespace ClientSocket.Services
             {
                 return new ActionResult();
             }
-            return downloadService.DownloadFile(fileName, parameters, socket, endPoint);
+            return downloadService.DownloadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP);
         }
 
         public ActionResult UploadFile(string fileName)
@@ -50,7 +61,7 @@ namespace ClientSocket.Services
             {
                 return new ActionResult();
             }
-            return uploadService.UploadFile(fileName, parameters, socket, endPoint);
+            return uploadService.UploadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP);
         }
 
         private string[] GetParameters(string command)

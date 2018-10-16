@@ -14,11 +14,14 @@ namespace ClientSocket.Services
     {
         private Socket socket;
 
+        private Socket socketUDP;
+
         private EndPoint endPoint;
 
-        public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, EndPoint endPoint)
+        public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint)
         {
             this.socket = socket;
+            this.socketUDP = socketUDP;
             this.endPoint = endPoint;
 
             switch (socket.ProtocolType)
@@ -139,13 +142,13 @@ namespace ClientSocket.Services
                     {
                         FirstDataGetting(file, fileModel);
                         countCamingPackets++;
-                    } while (socket.Available != 0);
-                    while (countCamingPackets == 64 && file.Length < fileModel.Size)
+                    } while (socketUDP.Available != 0);
+                    while (countCamingPackets != 64 && file.Length < fileModel.Size)
                     {
                         RegettingMissingPackets(file, fileModel, ref countCamingPackets);
                         countCamingPackets = 0;
                     }
-                    socket.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPoint);
+                    socket.Send(Encoding.ASCII.GetBytes("Correct|"));
                 }
                 file.Close();
                 return new ActionResult()
@@ -183,11 +186,7 @@ namespace ClientSocket.Services
         private void GettingMissingPackets(FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectError))
-            {
-                throw new SocketException((int)SocketError.ConnectionReset);
-            }
-            socket.ReceiveFrom(data, ref endPoint);
+            socketUDP.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
             if(fileModel.Packets.Any(x=>x.Number == long.Parse(packetParameters[0])))
@@ -227,7 +226,7 @@ namespace ClientSocket.Services
                 offset += number.Length;
                 camingPackets.Remove(number);
             }
-            socket.SendTo(data, endPoint);
+            socket.Send(data);
         }
 
         private void FirstDataGetting(FileStream file, FileModel fileModel)
@@ -237,7 +236,7 @@ namespace ClientSocket.Services
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }
-            socket.ReceiveFrom(data, ref endPoint);
+            socketUDP.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
             if (packetParameters.First().Contains("Error"))

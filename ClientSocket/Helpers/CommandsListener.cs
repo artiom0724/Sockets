@@ -65,7 +65,7 @@ namespace ClientSocket.Helpers
 
         private void ConnectMethod(List<string> splittedCommand)
         {
-            socketWorker.ConnectSocket(splittedCommand[1], splittedCommand[2], splittedCommand.Count > 2 ? splittedCommand[3] : "tcp");
+            socketWorker.ConnectSocket(splittedCommand[1], splittedCommand[2]);
             Console.WriteLine("Connected");
         }
 

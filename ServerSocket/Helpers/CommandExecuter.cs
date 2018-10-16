@@ -17,7 +17,7 @@ namespace ServerSocket.Helpers
 
         private UploadService uploadService = new UploadService();
 
-        public void ExecuteCommand(Socket socket, ServerCommand command, EndPoint endPoint)
+        public void ExecuteCommand(Socket socket, ServerCommand command, Socket socketUDP, EndPoint endPoint)
         {
             switch (command.Type)
             {
@@ -31,10 +31,10 @@ namespace ServerSocket.Helpers
                     baseCommandService.CloseHandler(socket);
                     return;
                 case CommandType.Download:
-                    downloadService.DownloadFile(socket, endPoint, command);
+                    downloadService.DownloadFile(socket, endPoint, socketUDP, command);
                     return;
                 case CommandType.Upload:
-                    uploadService.UploadFile(socket, endPoint, command);
+                    uploadService.UploadFile(socket, endPoint, socketUDP, command);
                     return;
                 case CommandType.Unknown:
                     baseCommandService.UnknownHandler(socket);

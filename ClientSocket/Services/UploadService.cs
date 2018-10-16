@@ -13,13 +13,18 @@ namespace ClientSocket.Services
     {
         private Socket socket;
 
+        private Socket socketUDP;
+
         private EndPoint endPoint;
 
-        public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, EndPoint endPoint)
+        public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint)
         {
             this.socket = socket;
+            this.socketUDP = socketUDP;
             this.endPoint = endPoint;
-            switch(socket.ProtocolType)
+            Console.Clear();
+
+            switch (socket.ProtocolType)
             {
                 case ProtocolType.Tcp:
                     return UploadFileTCP(fileName, parameters);
@@ -43,7 +48,7 @@ namespace ClientSocket.Services
             };
             if(uploaded != 0)
             {
-                timeAwait = ContinueUploading(file);
+                timeAwait = ContinueUploading();
                 if (timeAwait != 0)
                 {
                     fileModel.Packets.Add(new PacketModel()
@@ -97,7 +102,7 @@ namespace ClientSocket.Services
             return packetNumber;
         }
 
-        private long ContinueUploading(FileStream file)
+        private long ContinueUploading()
         {
             long timeAwait;
             Console.WriteLine("File exist in current upload directory.\n" +
@@ -163,11 +168,7 @@ namespace ClientSocket.Services
             do
             {
                 var infoCaming = new byte[4096];
-                if (socket.Poll(20000, SelectMode.SelectError))
-                {
-                    throw new SocketException((int)SocketError.ConnectionReset);
-                }
-                socket.ReceiveFrom(infoCaming, ref endPoint);
+                socket.Receive(infoCaming);
                 var incomingString = Encoding.ASCII.GetString(infoCaming);
                 if (incomingString.Contains("Correct"))
                 {
@@ -187,7 +188,7 @@ namespace ClientSocket.Services
                 data.InsertInStartArray(info);
                 file.Seek(packet.FilePosition, SeekOrigin.Begin);
                 file.Read(data, info.Length, data.Length - info.Length);
-                socket.SendTo(data, endPoint);
+                socketUDP.SendTo(data, endPoint);
                 fileModel.Packets.Add(packet);
                 var percent = (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size);
                 percent = percent > 100 ? 100 : percent;
@@ -209,7 +210,7 @@ namespace ClientSocket.Services
             packetNumber++;
             data.InsertInStartArray(info);
             file.Read(data, info.Length, data.Length - info.Length);
-            socket.SendTo(data, endPoint);
+            socketUDP.SendTo(data, endPoint);
             fileModel.Packets.Add(packet);
             var percent = (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size);
             percent = percent > 100 ? 100 : percent;

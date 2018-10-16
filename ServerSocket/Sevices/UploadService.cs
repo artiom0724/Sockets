@@ -16,11 +16,14 @@ namespace ServerSocket.Sevices
     {
         private Socket socket;
 
+        private Socket socketUDP;
+
         private EndPoint endPoint;
 
-        public void UploadFile(Socket socket, EndPoint endPoint, ServerCommand command)
+        public void UploadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command)
         {
             this.socket = socket;
+            this.socketUDP = socketUDP;
             this.endPoint = endPoint;
             switch (socket.ProtocolType)
             {
@@ -80,7 +83,8 @@ namespace ServerSocket.Sevices
                     GettingProcess(file, fileModel);
                 }
                 file.Close();
-            }catch(Exception exc)
+            }
+            catch (Exception exc)
             {
                 if (file != null)
                 {
@@ -102,7 +106,7 @@ namespace ServerSocket.Sevices
             var packetParameters = incomingString.Split('|');
             var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
-            if(fileModel.Size - file.Length < writedData.Length)
+            if (fileModel.Size - file.Length < writedData.Length)
             {
                 writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
@@ -121,33 +125,36 @@ namespace ServerSocket.Sevices
             Console.Clear();
             FileStream file = null;
             try
-            { 
-            file = File.OpenWrite(command.Parameters.First());
-            var fileModel = new FileModel()
             {
-                FileName = file.Name,
-                Size = int.Parse(command.Parameters.First())
-            };
-            if (file.Length > 0)
-            {
-                File.Delete(file.Name);
                 file = File.OpenWrite(command.Parameters.First());
-            }
-
-            while (file.Length < long.Parse(command.Parameters.Last()))
-            {
-                do
+                var fileModel = new FileModel()
                 {
-                    FirstDataGetting(file, fileModel);
-                } while (socket.Available != 0);
-                while (fileModel.Size < fileModel.Packets.Sum(x => x.Size))
+                    FileName = file.Name,
+                    Size = int.Parse(command.Parameters.First())
+                };
+                if (file.Length > 0)
                 {
-                    RegettingMissingPackets(file, fileModel);
+                    File.Delete(file.Name);
+                    file = File.OpenWrite(command.Parameters.First());
                 }
-                socket.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
+                long gettedPacketsCount = 0;
+                while (file.Length < long.Parse(command.Parameters.Last()))
+                {
+                    do
+                    {
+                        FirstDataGetting(file, fileModel);
+                        gettedPacketsCount++;
+                    } while (fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
+                    while (fileModel.Size < fileModel.Packets.Sum(x => x.Size) && gettedPacketsCount < 64)
+                    {
+                        RegettingMissingPackets(file, fileModel, ref gettedPacketsCount);
+                    }
+                    gettedPacketsCount = 0;
+                    socket.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
+                }
+                file.Close();
             }
-            file.Close();
-        }catch(Exception exc)
+            catch (Exception exc)
             {
                 if (file != null)
                 {
@@ -155,11 +162,11 @@ namespace ServerSocket.Sevices
                 }
                 Console.WriteLine(exc.Message);
             }
-}
+        }
 
-        private void RegettingMissingPackets(FileStream file, FileModel fileModel)
+        private void RegettingMissingPackets(FileStream file, FileModel fileModel, ref long gettedPacketsCount)
         {
-            var camingPackets = fileModel.Packets.Select(x => Encoding.ASCII.GetBytes($"{x.Number.ToString()}")).ToList();
+            var camingPackets = fileModel.Packets.Select(x => Encoding.ASCII.GetBytes($"{x.Number.ToString()}|")).ToList();
             while (true)
             {
                 SendCamingPackagesNumbers(camingPackets);
@@ -171,35 +178,13 @@ namespace ServerSocket.Sevices
             do
             {
                 GettingMissingPackets(file, fileModel);
-            } while (socket.Available != 0);
+                gettedPacketsCount++;
+            } while (gettedPacketsCount < 64);
         }
 
         private void GettingMissingPackets(FileStream file, FileModel fileModel)
         {
-            var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectError))
-            {
-                throw new SocketException((int)SocketError.ConnectionReset);
-            }
-            socket.ReceiveFrom(data, ref endPoint);
-
-            var incomingString = Encoding.ASCII.GetString(data);
-            var packetParameters = incomingString.Split('|');
-            var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
-            var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
-            file.Seek(long.Parse(packetParameters[1]), SeekOrigin.Begin);
-            if (fileModel.Size - file.Length < writedData.Length)
-            {
-                writedData = writedData.SubArray(0, fileModel.Size - file.Length);
-            }
-            file.Write(writedData, 0, writedData.Length);
-            fileModel.Packets.Add(new PacketModel()
-            {
-                Size = writedData.Length,
-                IsCame = true,
-                Number = long.Parse(packetParameters[0]),
-                FilePosition = long.Parse(packetParameters[1])
-            });
+            DataGetting(file, fileModel);
             Console.Write("\rRegetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
         }
 
@@ -218,24 +203,25 @@ namespace ServerSocket.Sevices
                 offset += number.Length;
                 camingPackets.Remove(number);
             }
-            socket.SendTo(data, endPoint);
+            socket.Send(data);
         }
 
         private void FirstDataGetting(FileStream file, FileModel fileModel)
         {
+            DataGetting(file, fileModel);
+            Console.Write("\rGetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+        }
+
+        private void DataGetting(FileStream file, FileModel fileModel)
+        {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectError))
-            {
-                throw new SocketException((int)SocketError.ConnectionReset);
-            }
-            socket.ReceiveFrom(data, ref endPoint);
+            socketUDP.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
             var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
             var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
             if (fileModel.Size - file.Length < writedData.Length)
             {
-
                 writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
             file.Seek(long.Parse(packetParameters[1]), SeekOrigin.Begin);
@@ -247,7 +233,6 @@ namespace ServerSocket.Sevices
                 Number = long.Parse(packetParameters[0]),
                 FilePosition = long.Parse(packetParameters[1])
             });
-            Console.Write("\rGetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
         }
     }
 }

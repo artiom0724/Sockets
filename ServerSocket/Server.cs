@@ -1,4 +1,5 @@
-﻿using ServerSocket.Helpers;
+﻿using ClientSocket.Models;
+using ServerSocket.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -22,19 +23,17 @@ namespace ServerSocket
             {
                 return false;
             }
-            Console.Write("* - required parameter. \nInput <[IP-address*] [port*] [Protocol type*]> for start: ");
+            Console.Write("* - required parameter. \nInput <[IP-address*] [port*]> for start: ");
             var inputData = Console.ReadLine();
             var startParameters = inputData.Split(' ');
             var ip = IPAddress.Parse(startParameters[0]);
             var port = int.Parse(startParameters[1]);
-            var endPoint = new IPEndPoint(ip, port);
-            var protocolType = startParameters[2];
-            socketWorker = new SocketWorker()
-            {
-                SelectedProtocolType = protocolType
-            };
+            socketWorker = new SocketWorker();
             workerThread = new Thread(this.MonitorPort);
-            workerThread.Start(endPoint);
+            workerThread.Start(new DoubleEndPointModel() {
+                EndPoint = new IPEndPoint(ip, port),
+                EndPointUDP = new IPEndPoint(ip, port + 1)
+            });
             running = true;
             return true;
         }
