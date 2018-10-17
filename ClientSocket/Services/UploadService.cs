@@ -17,14 +17,14 @@ namespace ClientSocket.Services
 
         private EndPoint endPoint;
 
-        public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint)
+        public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
             Console.Clear();
 
-            switch (socket.ProtocolType)
+            switch (type)
             {
                 case ProtocolType.Tcp:
                     return UploadFileTCP(fileName, parameters);

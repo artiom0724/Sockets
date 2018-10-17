@@ -24,12 +24,11 @@ namespace ClientSocket.Services
             endPointModel = new DoubleEndPointModel()
             {
                 EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
-                EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)+1)
+                EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 1)
             };
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             socket.Connect(endPointModel.EndPoint);
-            socketUDP.Connect(endPointModel.EndPointUDP);
         }
 
         public void DisconnectSocket()
@@ -42,26 +41,33 @@ namespace ClientSocket.Services
             socketUDP.Dispose();
         }
 
-        public ActionResult DownloadFile(string fileName)
+        public ActionResult DownloadFile(string fileName, ProtocolType type)
         {
-            var parameters = GetParameters($"client_download {fileName}\r\n");
+            socketUDP.Bind(endPointModel.EndPointUDP);
+
+            var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
+            var parameters = GetParameters($"client_download{parameterType} {fileName}\r\n");
             if(parameters.Contains("Error"))
             {
                 return new ActionResult();
             }
-            return downloadService.DownloadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP);
+            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP, type);
+            socketUDP.Close();
+            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            return returning;
         }
 
-        public ActionResult UploadFile(string fileName)
+        public ActionResult UploadFile(string fileName, ProtocolType type)
         {
             var file = File.OpenRead(fileName);
-            var parameters = GetParameters($"client_upload {fileName} {file.Length}\r\n");
+            var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
+            var parameters = GetParameters($"client_upload{parameterType} {fileName} {file.Length}\r\n");
             file.Close();
             if (parameters.Contains("Error"))
             {
                 return new ActionResult();
             }
-            return uploadService.UploadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP);
+            return uploadService.UploadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP, type);
         }
 
         private string[] GetParameters(string command)

@@ -18,20 +18,29 @@ namespace ClientSocket.Services
 
         private EndPoint endPoint;
 
-        public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint)
+        private EndPoint ipClient;
+
+        private FileModel fileModel;
+
+
+        public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
-
-            switch (socket.ProtocolType)
+            var returning = new ActionResult();
+            switch (type)
             {
                 case ProtocolType.Tcp:
-                    return DownloadFileTCP(fileName, parameters);
+                    returning = DownloadFileTCP(fileName, parameters);
+                    ipClient = endPoint;
+                    return returning;
                 case ProtocolType.Udp:
-                    return DownloadFileUDP(fileName, parameters);
+                    returning = DownloadFileUDP(fileName, parameters);
+                    ipClient = endPoint;
+                    return returning;
                 default:
-                    return new ActionResult();
+                    return returning;
             }
         }
 
@@ -40,11 +49,14 @@ namespace ClientSocket.Services
             long timeAwait = 0;
             var file = File.OpenWrite(fileName);
             var data = new byte[4096];
-            var fileModel = new FileModel()
+            if (ipClient != endPoint)
             {
-                FileName = file.Name,
-                Size = int.Parse(parameters[0])
-            };
+                fileModel = new FileModel()
+                {
+                    FileName = file.Name,
+                    Size = int.Parse(parameters[0])
+                };
+            }
             if (file.Length > 0 && file.Length < fileModel.Size)
             {
                 timeAwait = ContinueDownloading(file);
@@ -64,7 +76,7 @@ namespace ClientSocket.Services
 
             while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
             {
-                DownloadingProcess(file, fileModel);
+                DownloadingProcess(file);
             }
             file.Close();
             return new ActionResult()
@@ -94,7 +106,7 @@ namespace ClientSocket.Services
             return timeAwait;
         }
 
-        private void DownloadingProcess(FileStream file, FileModel fileModel)
+        private void DownloadingProcess(FileStream file)
         {
             var data = new byte[4096];
             if (socket.Poll(20000, SelectMode.SelectError))
@@ -125,7 +137,7 @@ namespace ClientSocket.Services
             var file = File.OpenWrite(fileName);
             try
             {
-                var fileModel = new FileModel()
+                fileModel = new FileModel()
                 {
                     FileName = file.Name,
                     Size = int.Parse(parameters.First())
@@ -136,16 +148,16 @@ namespace ClientSocket.Services
                     file = File.OpenWrite(fileName);
                 }
                 long countCamingPackets = 0;
-                while (file.Length < fileModel.Size)
+                while (fileModel.Packets.Sum(x => x.Size) < fileModel.Size)
                 {
                     do
                     {
-                        FirstDataGetting(file, fileModel);
+                        FirstDataGetting(file);
                         countCamingPackets++;
                     } while (socketUDP.Available != 0);
                     while (countCamingPackets != 64 && file.Length < fileModel.Size)
                     {
-                        RegettingMissingPackets(file, fileModel, ref countCamingPackets);
+                        RegettingMissingPackets(file, ref countCamingPackets);
                         countCamingPackets = 0;
                     }
                     socket.Send(Encoding.ASCII.GetBytes("Correct|"));
@@ -165,7 +177,7 @@ namespace ClientSocket.Services
             }
         }
 
-        private void RegettingMissingPackets(FileStream file, FileModel fileModel, ref long countCamingPackets)
+        private void RegettingMissingPackets(FileStream file, ref long countCamingPackets)
         {
             var camingPackets = fileModel.Packets.Select(x => Encoding.ASCII.GetBytes($"{x.Number.ToString()}|")).ToList();
             while (true)
@@ -178,12 +190,12 @@ namespace ClientSocket.Services
             }
             do
             {
-                GettingMissingPackets(file, fileModel);
+                GettingMissingPackets(file);
                 countCamingPackets++;
             } while (socket.Available != 0);
         }
 
-        private void GettingMissingPackets(FileStream file, FileModel fileModel)
+        private void GettingMissingPackets(FileStream file)
         {
             var data = new byte[4096];
             socketUDP.ReceiveFrom(data, ref endPoint);
@@ -229,13 +241,9 @@ namespace ClientSocket.Services
             socket.Send(data);
         }
 
-        private void FirstDataGetting(FileStream file, FileModel fileModel)
+        private void FirstDataGetting(FileStream file)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectError))
-            {
-                throw new SocketException((int)SocketError.ConnectionReset);
-            }
             socketUDP.ReceiveFrom(data, ref endPoint);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');

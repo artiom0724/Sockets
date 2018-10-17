@@ -13,7 +13,9 @@ namespace ServerSocket.Enums
             Close,
             Download,
             Unknown,
-            Upload
+            Upload,
+            DownloadUDP,
+            UploadUDP
         }
     }
 }

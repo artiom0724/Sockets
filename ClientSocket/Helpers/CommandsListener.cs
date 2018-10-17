@@ -79,7 +79,7 @@ namespace ClientSocket.Helpers
         {
             Console.WriteLine("Uploading start...");
             var time = DateTime.Now;
-            var actionResult = socketWorker.UploadFile(splittedCommand[1]);
+            var actionResult = socketWorker.UploadFile(splittedCommand[1], splittedCommand[2] == "udp" ? System.Net.Sockets.ProtocolType.Udp: System.Net.Sockets.ProtocolType.Tcp);
             if (actionResult.FileSize == 0)
             {
                 Console.WriteLine("Error file. Uploading breaking");
@@ -94,7 +94,7 @@ namespace ClientSocket.Helpers
         {
             Console.WriteLine("Downloading start...");
             var time = DateTime.Now;
-            var actionResult = socketWorker.DownloadFile(splittedCommand[1]);
+            var actionResult = socketWorker.DownloadFile(splittedCommand[1], splittedCommand[2] == "udp" ? System.Net.Sockets.ProtocolType.Udp : System.Net.Sockets.ProtocolType.Tcp);
             if (actionResult.FileSize == 0)
             {
                 Console.WriteLine("Error file. Downloading breaking");

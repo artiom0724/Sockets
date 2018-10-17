@@ -37,6 +37,10 @@ namespace ServerSocket.Helpers
                     {
                         socket.Close();
                     }
+                    if(socketUDP != null)
+                    {
+                        socketUDP.Close();
+                    }
                     Console.WriteLine(exc.Message);
                 }
             }
@@ -79,9 +83,9 @@ namespace ServerSocket.Helpers
         private Socket CreateSocket(ProtocolType type)
         {
             var newSocket = new Socket(AddressFamily.InterNetwork, type == ProtocolType.Udp? SocketType.Dgram : SocketType.Stream, type);
-            newSocket.Bind(type == ProtocolType.Udp? endPointModel.EndPointUDP: endPointModel.EndPoint);
             if (type == ProtocolType.Tcp)
             {
+                newSocket.Bind(endPointModel.EndPoint);
                 newSocket.Listen(10);
             }
             return newSocket;

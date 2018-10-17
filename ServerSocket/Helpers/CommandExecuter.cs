@@ -31,10 +31,19 @@ namespace ServerSocket.Helpers
                     baseCommandService.CloseHandler(socket);
                     return;
                 case CommandType.Download:
-                    downloadService.DownloadFile(socket, endPoint, socketUDP, command);
+                    downloadService.DownloadFile(socket, endPoint, socketUDP, command, ProtocolType.Tcp);
                     return;
                 case CommandType.Upload:
-                    uploadService.UploadFile(socket, endPoint, socketUDP, command);
+                    uploadService.UploadFile(socket, endPoint, socketUDP, command, ProtocolType.Tcp);
+                    return;
+                case CommandType.DownloadUDP:
+                    downloadService.DownloadFile(socket, endPoint, socketUDP, command, ProtocolType.Udp);
+                    return;
+                case CommandType.UploadUDP:
+                    socketUDP.Bind(endPoint);
+                    uploadService.UploadFile(socket, endPoint, socketUDP, command, ProtocolType.Udp);
+                    socketUDP.Close();
+                    socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                     return;
                 case CommandType.Unknown:
                     baseCommandService.UnknownHandler(socket);

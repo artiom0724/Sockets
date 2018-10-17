@@ -20,13 +20,13 @@ namespace ServerSocket.Sevices
 
         private EndPoint endPoint;
 
-        public void DownloadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command)
+        public void DownloadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
 
-            switch (socket.ProtocolType)
+            switch (type)
             {
                 case ProtocolType.Tcp:
                     DownloadFileTCP(command);
@@ -125,6 +125,7 @@ namespace ServerSocket.Sevices
                     Size = file.Length
                 };
                 long packetNumber = 0, partCamingPackets = 0;
+                socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
                 while (file.Length > fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size))
                 {
                     while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partCamingPackets < 64)
