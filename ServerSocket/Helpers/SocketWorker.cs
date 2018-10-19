@@ -33,6 +33,7 @@ namespace ServerSocket.Helpers
                     MonitorPort();
                     socket.Close();
                     socketUDP.Close();
+                    socketUDPBind.Close();
                     Console.WriteLine("Disconnect");
                 }
                 catch (Exception exc)
@@ -44,6 +45,10 @@ namespace ServerSocket.Helpers
                     if(socketUDP != null)
                     {
                         socketUDP.Close();
+                    }
+                    if (socketUDP != null)
+                    {
+                        socketUDPBind.Close();
                     }
                     Console.WriteLine(exc.Message);
                 }

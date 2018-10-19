@@ -86,7 +86,7 @@ namespace ClientSocket.Helpers
                 return;
             }
             var resultSpeed = actionResult.FileSize / ((DateTime.Now - time).Milliseconds - actionResult.TimeAwait);
-            Console.WriteLine("Uploading complete\nAverage speed: "
+            Console.WriteLine("\nUploading complete\nAverage speed: "
                 + resultSpeed.ToString() + " bpms");
         }
 
@@ -101,16 +101,16 @@ namespace ClientSocket.Helpers
                 return;
             }
             var resultSpeed = actionResult.FileSize / ((DateTime.Now - time).Milliseconds - actionResult.TimeAwait);
-            Console.WriteLine("Downloading complete\nAverage speed: "
+            Console.WriteLine("\nDownloading complete\nAverage speed: "
                 + resultSpeed.ToString() + " bpms");
         }
 
         private void WriteHelpManual()
         {
-            Console.WriteLine("connect [ip*] [port*] [type*]- for connect to socket");
+            Console.WriteLine("connect [ip*] [port*]- for connect to socket");
             Console.WriteLine("disconnect - for disconnect to socket");
-            Console.WriteLine("download [filename*] - download file from server");
-            Console.WriteLine("upload [filename*] - upload file to server");
+            Console.WriteLine("download [filename*] [type*]- download file from server");
+            Console.WriteLine("upload [filename*] [type*]- upload file to server");
             Console.WriteLine("help - for getting help manual");
             Console.WriteLine("P.s. '*' - required parameter");
         }

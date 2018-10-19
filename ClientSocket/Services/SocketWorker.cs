@@ -23,27 +23,33 @@ namespace ClientSocket.Services
 
         public void ConnectSocket(string ip, string port)
         {
-            endPointModel = new TripleEndPointModel()
+            if (socket == null && socketUDP == null && socketUDPBind == null)
             {
-                EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
-                EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 2),
-                EndPointUDPBind = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 1)
-            };
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socketUDPBind = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socketUDPBind.Bind(endPointModel.EndPointUDPBind);
-            socket.Connect(endPointModel.EndPoint);
+                endPointModel = new TripleEndPointModel()
+                {
+                    EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
+                    EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 2),
+                    EndPointUDPBind = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 1)
+                };
+                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                socketUDPBind = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                socketUDPBind.Bind(endPointModel.EndPointUDPBind);
+                socket.Connect(endPointModel.EndPoint);
+            }
         }
 
         public void DisconnectSocket()
         {
             socket.Shutdown(SocketShutdown.Both);
             socketUDP.Shutdown(SocketShutdown.Both);
+            socketUDPBind.Shutdown(SocketShutdown.Both);
             socket.Close();
             socketUDP.Close();
-            socket.Dispose();
-            socketUDP.Dispose();
+            socketUDPBind.Close();
+            socket = null;
+            socketUDP = null;
+            socketUDPBind = null;
         }
 
         public ActionResult DownloadFile(string fileName, ProtocolType type)
