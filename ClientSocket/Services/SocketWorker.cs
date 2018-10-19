@@ -13,21 +13,26 @@ namespace ClientSocket.Services
 
         private Socket socketUDP;
 
+        private Socket socketUDPBind;
+
         private DownloadService downloadService = new DownloadService();
 
         private UploadService uploadService = new UploadService();
 
-        private DoubleEndPointModel endPointModel;
+        private TripleEndPointModel endPointModel;
 
         public void ConnectSocket(string ip, string port)
         {
-            endPointModel = new DoubleEndPointModel()
+            endPointModel = new TripleEndPointModel()
             {
                 EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
-                EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 1)
+                EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 2),
+                EndPointUDPBind = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 1)
             };
             socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socketUDPBind = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            socketUDPBind.Bind(endPointModel.EndPointUDPBind);
             socket.Connect(endPointModel.EndPoint);
         }
 
@@ -43,17 +48,13 @@ namespace ClientSocket.Services
 
         public ActionResult DownloadFile(string fileName, ProtocolType type)
         {
-            socketUDP.Bind(endPointModel.EndPointUDP);
-
             var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
             var parameters = GetParameters($"client_download{parameterType} {fileName}\r\n");
             if(parameters.Contains("Error"))
             {
                 return new ActionResult();
             }
-            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP, type);
-            socketUDP.Close();
-            socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDPBind, endPointModel.EndPointUDPBind, type);
             return returning;
         }
 
@@ -61,7 +62,7 @@ namespace ClientSocket.Services
         {
             var file = File.OpenRead(fileName);
             var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
-            var parameters = GetParameters($"client_upload{parameterType} {fileName} {file.Length}\r\n");
+            var parameters = GetParameters($"client_upload{parameterType} {fileName} {file.Length}\r\n", type);
             file.Close();
             if (parameters.Contains("Error"))
             {
@@ -70,7 +71,7 @@ namespace ClientSocket.Services
             return uploadService.UploadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP, type);
         }
 
-        private string[] GetParameters(string command)
+        private string[] GetParameters(string command, ProtocolType type = ProtocolType.Tcp)
         {
             socket.Send(Encoding.ASCII.GetBytes(command));
             var data = new byte[4096];
@@ -78,10 +79,14 @@ namespace ClientSocket.Services
             {
                 throw new SocketException((int)SocketError.ConnectionReset);
             }
-            socket.Receive(data);
-            var incomingString = Encoding.ASCII.GetString(data);
-            var parameters = incomingString.Split('|');
-            return parameters;
+            if (type == ProtocolType.Tcp)
+            {
+                socket.Receive(data);
+                var incomingString = Encoding.ASCII.GetString(data);
+                var parameters = incomingString.Split('|');
+                return parameters;
+            }
+            return new string[1];
         }
     }
 }

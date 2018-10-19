@@ -157,8 +157,6 @@ namespace ClientSocket.Services
             catch (SocketException ex)
             {
                 Console.WriteLine(ex);
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
                 return new ActionResult();
             }
         }

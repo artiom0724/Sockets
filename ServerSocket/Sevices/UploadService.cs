@@ -18,11 +18,11 @@ namespace ServerSocket.Sevices
 
         private Socket socketUDP;
 
-        private EndPoint endPoint;
+            private EndPoint endPoint;
 
-        private EndPoint ipClient;
+            private EndPoint ipClient;
 
-        private FileModel fileModel;
+            private FileModel fileModel;
 
         public void UploadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type)
         {
@@ -47,7 +47,7 @@ namespace ServerSocket.Sevices
             Console.Clear();
             try
             {
-                if(ipClient != endPoint)
+                if(ipClient != endPoint || file.Name != fileModel.FileName)
                 {
                     fileModel = new FileModel()
                     {
@@ -140,7 +140,7 @@ namespace ServerSocket.Sevices
                 fileModel = new FileModel()
                 {
                     FileName = file.Name,
-                    Size = int.Parse(command.Parameters.First())
+                    Size = int.Parse(command.Parameters[1])
                 };
                 if (file.Length > 0)
                 {
@@ -162,7 +162,6 @@ namespace ServerSocket.Sevices
                     gettedPacketsCount = 0;
                     socket.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
                 }
-                file.Close();
             }
             catch (Exception exc)
             {
@@ -172,6 +171,7 @@ namespace ServerSocket.Sevices
                 }
                 Console.WriteLine(exc.Message);
             }
+            file.Close();
         }
 
         private void RegettingMissingPackets(FileStream file, ref long gettedPacketsCount)

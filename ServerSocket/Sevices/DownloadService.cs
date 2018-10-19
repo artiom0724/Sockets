@@ -69,6 +69,7 @@ namespace ServerSocket.Sevices
                 {
                     packetNumber = SendingProcess(file, fileModel, packetNumber);
                 }
+                file.Close();
             }
             catch (FileNotFoundException ex)
             {
@@ -139,6 +140,7 @@ namespace ServerSocket.Sevices
                         ResendingMissingPackets(file, fileModel);
                     }
                 }
+                file.Close();
             }
             catch (FileNotFoundException ex)
             {

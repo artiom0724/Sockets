@@ -1,4 +1,5 @@
-﻿using ServerSocket.Models;
+﻿using ClientSocket.Models;
+using ServerSocket.Models;
 using ServerSocket.Sevices;
 using System;
 using System.Collections.Generic;
@@ -17,7 +18,7 @@ namespace ServerSocket.Helpers
 
         private UploadService uploadService = new UploadService();
 
-        public void ExecuteCommand(Socket socket, ServerCommand command, Socket socketUDP, EndPoint endPoint)
+        public void ExecuteCommand(Socket socket, ServerCommand command, Socket socketUDP, Socket socketUDPBind, TripleEndPointModel endPoint)
         {
             switch (command.Type)
             {
@@ -31,19 +32,16 @@ namespace ServerSocket.Helpers
                     baseCommandService.CloseHandler(socket);
                     return;
                 case CommandType.Download:
-                    downloadService.DownloadFile(socket, endPoint, socketUDP, command, ProtocolType.Tcp);
+                    downloadService.DownloadFile(socket, endPoint.EndPoint, socketUDP, command, ProtocolType.Tcp);
                     return;
                 case CommandType.Upload:
-                    uploadService.UploadFile(socket, endPoint, socketUDP, command, ProtocolType.Tcp);
+                    uploadService.UploadFile(socket, endPoint.EndPoint, socketUDP, command, ProtocolType.Tcp);
                     return;
                 case CommandType.DownloadUDP:
-                    downloadService.DownloadFile(socket, endPoint, socketUDP, command, ProtocolType.Udp);
+                    downloadService.DownloadFile(socket, endPoint.EndPointUDP, socketUDP, command, ProtocolType.Udp);
                     return;
                 case CommandType.UploadUDP:
-                    socketUDP.Bind(endPoint);
-                    uploadService.UploadFile(socket, endPoint, socketUDP, command, ProtocolType.Udp);
-                    socketUDP.Close();
-                    socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                    uploadService.UploadFile(socket, endPoint.EndPointUDPBind, socketUDPBind, command, ProtocolType.Udp);
                     return;
                 case CommandType.Unknown:
                     baseCommandService.UnknownHandler(socket);

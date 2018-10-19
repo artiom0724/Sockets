@@ -1,5 +1,6 @@
 ﻿using ClientSocket.Models;
 using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
@@ -11,21 +12,24 @@ namespace ServerSocket.Helpers
 
         private Socket socketUDP;
 
+        private Socket socketUDPBind;
+
         private CommandParser commandParser = new CommandParser();
 
         private CommandExecuter commandExecuter = new CommandExecuter();
 
-        private DoubleEndPointModel endPointModel;
+        private TripleEndPointModel endPointModel;
 
         public void AwaitCommand(object data)
         {
-            endPointModel = (DoubleEndPointModel)data;
+            endPointModel = (TripleEndPointModel)data;
             while (true)
             {
                 try
                 {
-                    socket = CreateSocket(ProtocolType.Tcp);
+                    socket = CreateSocket(ProtocolType.Tcp, endPointModel.EndPoint);
                     socketUDP = CreateSocket(ProtocolType.Udp);
+                    socketUDPBind = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPBind);
                     MonitorPort();
                     socket.Close();
                     socketUDP.Close();
@@ -71,7 +75,7 @@ namespace ServerSocket.Helpers
                     while (handler.Connected && !builder.ToString().Contains("\r\n"));
                     var commandString = builder.ToString();
                     
-                    commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), socketUDP, endPointModel.EndPointUDP);
+                    commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), socketUDP, socketUDPBind, endPointModel);
                     if (!handler.Connected)
                     {
                         break;
@@ -80,14 +84,18 @@ namespace ServerSocket.Helpers
             }
         }
 
-        private Socket CreateSocket(ProtocolType type)
+        private Socket CreateSocket(ProtocolType type, EndPoint endPoint = null)
         {
             var newSocket = new Socket(AddressFamily.InterNetwork, type == ProtocolType.Udp? SocketType.Dgram : SocketType.Stream, type);
-            if (type == ProtocolType.Tcp)
+            if(endPoint != null)
             {
-                newSocket.Bind(endPointModel.EndPoint);
+                newSocket.Bind(endPoint);
+            }
+            if (type == ProtocolType.Tcp)
+            {             
                 newSocket.Listen(10);
             }
+
             return newSocket;
         }
     }

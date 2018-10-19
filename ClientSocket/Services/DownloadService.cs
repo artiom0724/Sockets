@@ -49,7 +49,7 @@ namespace ClientSocket.Services
             long timeAwait = 0;
             var file = File.OpenWrite(fileName);
             var data = new byte[4096];
-            if (ipClient != endPoint)
+            if (ipClient != endPoint || file.Name != fileModel.FileName)
             {
                 fileModel = new FileModel()
                 {
@@ -63,6 +63,7 @@ namespace ClientSocket.Services
                 if (timeAwait == 0)
                 {
                     socket.Send(Encoding.ASCII.GetBytes($"break|"));
+                    file.Close();
                     return new ActionResult();
                 }
                 fileModel.Packets.Add(new PacketModel()
