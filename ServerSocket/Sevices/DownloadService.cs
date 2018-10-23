@@ -77,12 +77,6 @@ namespace ServerSocket.Sevices
                 socket.Send(response);
                 Console.WriteLine(ex);
             }
-            catch (SocketException ex)
-            {
-                Console.WriteLine(ex);
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
-            }
         }
 
         private string CheckFileExists(FileStream file)
@@ -148,12 +142,6 @@ namespace ServerSocket.Sevices
                 socket.Send(response);
                 Console.WriteLine(ex);
             }
-            catch (SocketException ex)
-            {
-                Console.WriteLine(ex);
-                socket.Shutdown(SocketShutdown.Both);
-                socket.Close();
-            }
         }
 
         private void ResendingMissingPackets(FileStream file, FileModel fileModel)
@@ -161,10 +149,7 @@ namespace ServerSocket.Sevices
             do
             {
                 var infoCaming = new byte[4096];
-                if (socket.Poll(20000, SelectMode.SelectError))
-                {
-                    throw new SocketException((int)SocketError.ConnectionReset);
-                }
+
                 socket.Receive(infoCaming);
 
                 var incomingString = Encoding.ASCII.GetString(infoCaming);

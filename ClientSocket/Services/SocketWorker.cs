@@ -81,10 +81,7 @@ namespace ClientSocket.Services
         {
             socket.Send(Encoding.ASCII.GetBytes(command));
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectError))
-            {
-                throw new SocketException((int)SocketError.ConnectionReset);
-            }
+
             if (type == ProtocolType.Tcp)
             {
                 socket.Receive(data);

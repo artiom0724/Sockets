@@ -60,6 +60,7 @@ namespace ServerSocket.Helpers
             while (true)
             {
                 Socket handler = socket.Accept();
+                Console.WriteLine ($"Connected client with address {handler.RemoteEndPoint.ToString()}");
                 while (handler.Connected)
                 {
                     StringBuilder builder = new StringBuilder();
@@ -68,7 +69,7 @@ namespace ServerSocket.Helpers
 
                     do
                     {
-                        if(handler.Poll(20000, SelectMode.SelectError))
+                        if(handler.Poll(20000, SelectMode.SelectRead))
                         {
                             throw new SocketException((int)SocketError.ConnectionReset);
                         }

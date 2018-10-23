@@ -115,9 +115,10 @@ namespace ClientSocket.Services
 
         private ActionResult UploadFileUDP(string fileName)
         {
+            FileStream file = null;;
            try
             {
-                var file = File.OpenRead(fileName);
+                file = File.OpenRead(fileName);
 
                 var fileModel = new FileModel()
                 {
@@ -156,8 +157,8 @@ namespace ClientSocket.Services
             }
             catch (SocketException ex)
             {
-                Console.WriteLine(ex);
-                return new ActionResult();
+                file.Close();
+                throw ex;
             }
         }
 

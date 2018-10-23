@@ -110,10 +110,6 @@ namespace ClientSocket.Services
         private void DownloadingProcess(FileStream file)
         {
             var data = new byte[4096];
-            if (socket.Poll(20000, SelectMode.SelectError))
-            {
-                throw new SocketException((int)SocketError.ConnectionReset);
-            }
             socket.Receive(data);
             var incomingString = Encoding.ASCII.GetString(data);
             var packetParameters = incomingString.Split('|');
