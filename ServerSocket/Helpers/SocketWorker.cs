@@ -10,9 +10,9 @@ namespace ServerSocket.Helpers
     {
         private Socket socket;
 
-        private Socket socketUDP;
+        private Socket socketUDPWrite;
 
-        private Socket socketUDPBind;
+        private Socket socketUDPRead;
 
         private CommandParser commandParser = new CommandParser();
 
@@ -28,12 +28,14 @@ namespace ServerSocket.Helpers
                 try
                 {
                     socket = CreateSocket(ProtocolType.Tcp, endPointModel.EndPoint);
-                    socketUDP = CreateSocket(ProtocolType.Udp);
-                    socketUDPBind = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPBind);
+                    endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 1));
+                    endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 2));
+                    socketUDPWrite = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPWrite);
+                    socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
                     MonitorPort();
                     socket.Close();
-                    socketUDP.Close();
-                    socketUDPBind.Close();
+                    socketUDPWrite.Close();
+                    socketUDPRead.Close();
                     Console.WriteLine("Disconnect");
                 }
                 catch (Exception exc)
@@ -42,15 +44,16 @@ namespace ServerSocket.Helpers
                     {
                         socket.Close();
                     }
-                    if(socketUDP != null)
+                    if(socketUDPWrite != null)
                     {
-                        socketUDP.Close();
+                        socketUDPWrite.Close();
                     }
-                    if (socketUDP != null)
+                    if (socketUDPWrite != null)
                     {
-                        socketUDPBind.Close();
+                        socketUDPRead.Close();
                     }
                     Console.WriteLine(exc.Message);
+                    Console.WriteLine(exc.StackTrace);
                 }
             }
         }
@@ -81,7 +84,7 @@ namespace ServerSocket.Helpers
                     while (handler.Connected && !builder.ToString().Contains("\r\n"));
                     var commandString = builder.ToString();
                     
-                    commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), socketUDP, socketUDPBind, endPointModel);
+                    commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), socketUDPWrite, socketUDPRead, endPointModel);
                     if (!handler.Connected)
                     {
                         break;

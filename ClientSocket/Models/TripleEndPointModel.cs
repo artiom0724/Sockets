@@ -9,8 +9,8 @@ namespace ClientSocket.Models
     {
         public EndPoint EndPoint { get; set; } 
 
-        public EndPoint EndPointUDP { get; set; }
+        public EndPoint EndPointUDPRead { get; set; }
 
-        public EndPoint EndPointUDPBind { get; set; }
+        public EndPoint EndPointUDPWrite { get; set; }
     }
 }

@@ -11,9 +11,9 @@ namespace ClientSocket.Services
     {
         private Socket socket;
 
-        private Socket socketUDP;
+        private Socket socketUDPWrite;
 
-        private Socket socketUDPBind;
+        private Socket socketUDPRead;
 
         private DownloadService downloadService = new DownloadService();
 
@@ -23,33 +23,34 @@ namespace ClientSocket.Services
 
         public void ConnectSocket(string ip, string port)
         {
-            if (socket == null && socketUDP == null && socketUDPBind == null)
+            if (socket == null && socketUDPWrite == null && socketUDPRead == null)
             {
+                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 endPointModel = new TripleEndPointModel()
                 {
                     EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
-                    EndPointUDP = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 2),
-                    EndPointUDPBind = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port) + 1)
                 };
-                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                socketUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socketUDPBind = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socketUDPBind.Bind(endPointModel.EndPointUDPBind);
                 socket.Connect(endPointModel.EndPoint);
+                endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)socket.LocalEndPoint).Address, (((IPEndPoint)socket.LocalEndPoint).Port + 1));
+                endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)socket.LocalEndPoint).Address, (((IPEndPoint)socket.LocalEndPoint).Port + 2));
+                socketUDPWrite = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                socketUDPWrite.Bind(endPointModel.EndPointUDPWrite);
+                socketUDPRead = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                socketUDPRead.Bind(endPointModel.EndPointUDPRead);
             }
         }
 
         public void DisconnectSocket()
         {
             socket.Shutdown(SocketShutdown.Both);
-            socketUDP.Shutdown(SocketShutdown.Both);
-            socketUDPBind.Shutdown(SocketShutdown.Both);
+            socketUDPWrite.Shutdown(SocketShutdown.Both);
+            socketUDPRead.Shutdown(SocketShutdown.Both);
             socket.Close();
-            socketUDP.Close();
-            socketUDPBind.Close();
+            socketUDPWrite.Close();
+            socketUDPRead.Close();
             socket = null;
-            socketUDP = null;
-            socketUDPBind = null;
+            socketUDPWrite = null;
+            socketUDPRead = null;
         }
 
         public ActionResult DownloadFile(string fileName, ProtocolType type)
@@ -60,7 +61,7 @@ namespace ClientSocket.Services
             {
                 return new ActionResult();
             }
-            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDPBind, endPointModel.EndPointUDPBind, type);
+            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDPRead, endPointModel.EndPointUDPRead, type);
             return returning;
         }
 
@@ -74,7 +75,7 @@ namespace ClientSocket.Services
             {
                 return new ActionResult();
             }
-            return uploadService.UploadFile(fileName, parameters, socket, socketUDP, endPointModel.EndPointUDP, type);
+            return uploadService.UploadFile(fileName, parameters, socket, socketUDPWrite, endPointModel.EndPointUDPWrite, type);
         }
 
         private string[] GetParameters(string command, ProtocolType type = ProtocolType.Tcp)

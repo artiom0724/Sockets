@@ -32,8 +32,6 @@ namespace ServerSocket
             workerThread = new Thread(this.MonitorPort);
             workerThread.Start(new TripleEndPointModel() {
                 EndPoint = new IPEndPoint(ip, port),
-                EndPointUDP = new IPEndPoint(ip, port + 1),
-                EndPointUDPBind = new IPEndPoint(ip, port + 2)
             });
             running = true;
             return true;

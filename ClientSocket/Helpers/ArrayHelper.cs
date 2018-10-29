@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace ClientSocket.Helpers
 {
@@ -27,6 +28,15 @@ namespace ClientSocket.Helpers
                 data[startPosition + i] = inserting[i];
             }
             return data;
+        }
+
+        public static Stream AddToStream<T>(this Stream stream, T s)
+        {
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
     }
 }

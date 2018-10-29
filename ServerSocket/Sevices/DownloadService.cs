@@ -20,11 +20,14 @@ namespace ServerSocket.Sevices
 
         private EndPoint endPoint;
 
+        private EndPoint endPointUdp;
+
         public void DownloadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
+            this.endPointUdp = new IPEndPoint(((IPEndPoint)socket.RemoteEndPoint).Address, (((IPEndPoint)socket.RemoteEndPoint).Port + 1));
 
             switch (type)
             {
@@ -92,16 +95,20 @@ namespace ServerSocket.Sevices
         private long SendingProcess(FileStream file, FileModel fileModel, long packetNumber)
         {
             var data = new byte[4096];
-            var info = Encoding.ASCII.GetBytes($"{packetNumber}|{file.Position}|");
+            using (var stream = new PacketWriter())
+            {
+                stream.Write(packetNumber);
+                stream.Write(file.Position);
+                data.InsertInStartArray(stream.ToByteArray());
+            }
             var packet = new PacketModel()
             {
                 Number = packetNumber,
                 IsSend = true,
-                Size = data.Length - info.Length
+                Size = data.Length - 2*sizeof(long)
             };
             packetNumber++;
-            data.InsertInStartArray(info);
-            file.Read(data, info.Length, data.Length - info.Length);
+            file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socket.Send(data);
             fileModel.Packets.Add(packet);
             Console.WriteLine("\rSending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
@@ -158,8 +165,8 @@ namespace ServerSocket.Sevices
                     fileModel.Packets.ForEach(x => x.IsCame = true);
                     return;
                 }
-                var infoPackets = incomingString.Split("|").Select(x => long.Parse(x));
-                foreach(var packet in fileModel.Packets.Where(x => infoPackets.Contains(x.Number)))
+                List<long> infoPackets = GetInfoPackets(infoCaming);
+                foreach (var packet in fileModel.Packets.Where(x => infoPackets.Contains(x.Number)))
                 {
                     packet.IsCame = true;
                 }
@@ -167,31 +174,58 @@ namespace ServerSocket.Sevices
             foreach (var packet in fileModel.Packets.Where(x=>x.IsCame == false))
             {
                 var data = new byte[4096];
-                var info = Encoding.ASCII.GetBytes($"{packet.Number}|{packet.FilePosition}|");
-                data.InsertInStartArray(info);
+                using (var stream = new PacketWriter())
+                {
+                    stream.Write(packet.Number);
+                    stream.Write(packet.FilePosition);
+                    data.InsertInStartArray(stream.ToByteArray());
+                }
                 file.Seek(packet.FilePosition, SeekOrigin.Begin);
-                file.Read(data, info.Length, data.Length - info.Length);
-                socketUDP.SendTo(data, endPoint);
+                file.Read(data, 2*sizeof(long), data.Length - 2 * sizeof(long));
+                socketUDP.SendTo(data, endPointUdp);
                 fileModel.Packets.Add(packet);
                 Console.WriteLine("\rResending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
             }
         }
 
+        private static List<long> GetInfoPackets(byte[] infoCaming)
+        {
+            var infoPackets = new List<long>();
+            using (var stream = new PacketReader(infoCaming))
+            {
+                while (true)
+                {
+                    var packetNum = stream.ReadInt64();
+                    if (packetNum == 0)
+                    {
+                        break;
+                    }
+                    infoPackets.Add(packetNum);
+                }
+            }
+
+            return infoPackets;
+        }
+
         private long FirstSending(FileStream file, FileModel fileModel, long packetNumber)
         {
             var data = new byte[4096];
-            var info = Encoding.ASCII.GetBytes($"{packetNumber}|{file.Position}|");
+            using (var stream = new PacketWriter())
+            {
+                stream.Write(packetNumber);
+                stream.Write(file.Position);
+                data.InsertInStartArray(stream.ToByteArray());
+            }
             var packet = new PacketModel()
             {
                 Number = packetNumber,
                 IsSend = true,
-                Size = data.Length - info.Length,
+                Size = data.Length - 2*sizeof(long),
                 FilePosition = file.Position
             };
             packetNumber++;
-            data.InsertInStartArray(info);
-            file.Read(data, info.Length, data.Length - info.Length);
-            socketUDP.SendTo(data, endPoint);
+            file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
+            socketUDP.SendTo(data, endPointUdp);
             fileModel.Packets.Add(packet);
             Console.WriteLine("\rSending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;

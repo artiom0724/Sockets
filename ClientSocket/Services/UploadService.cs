@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -17,11 +18,14 @@ namespace ClientSocket.Services
 
         private EndPoint endPoint;
 
+        private EndPoint endPointUdp;
+
         public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
+            this.endPointUdp =  new IPEndPoint(((IPEndPoint)socket.RemoteEndPoint).Address, (((IPEndPoint)socket.RemoteEndPoint).Port + 1));
             Console.Clear();
 
             switch (type)
@@ -83,17 +87,19 @@ namespace ClientSocket.Services
         private int UploadingProcess(int packetNumber, FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
-
-            var info = Encoding.ASCII.GetBytes($"{packetNumber}|{file.Position}|");
+            using (var stream = new PacketWriter())
+            {
+                stream.Write(packetNumber);
+                stream.Write(file.Position);
+                data.InsertInStartArray(stream.ToByteArray());
+            }
             var packet = new PacketModel()
             {
                 Number = packetNumber,
                 IsSend = true,
-                Size = data.Length - info.Length
+                Size = data.Length - 2 * sizeof(long)
             };
             packetNumber++;
-            data.InsertInStartArray(info);
-            file.Read(data, info.Length, data.Length - info.Length);
             socket.Send(data);
             fileModel.Packets.Add(packet);
             var percent = (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size);
@@ -116,7 +122,7 @@ namespace ClientSocket.Services
         private ActionResult UploadFileUDP(string fileName)
         {
             FileStream file = null;;
-           try
+            try
             {
                 file = File.OpenRead(fileName);
 
@@ -168,14 +174,13 @@ namespace ClientSocket.Services
             {
                 var infoCaming = new byte[4096];
                 socket.Receive(infoCaming);
-                var incomingString = Encoding.ASCII.GetString(infoCaming);
-                if (incomingString.Contains("Correct"))
+                if (Encoding.ASCII.GetString(infoCaming).Contains("Correct"))
                 {
                     fileModel.Packets.Clear();
                     return;
                 }
-                var infoPackets = incomingString.Split("|").Select(x => long.Parse(x));
-                foreach (var packet in fileModel.Packets.Where(x=>infoPackets.Contains(x.Number)))
+                List<long> infoPackets = GetInfoPacketsNumbers(infoCaming);
+                foreach (var packet in fileModel.Packets.Where(x => infoPackets.Contains(x.Number)))
                 {
                     packet.IsCame = true;
                 }
@@ -183,11 +188,15 @@ namespace ClientSocket.Services
             foreach (var packet in fileModel.Packets)
             {
                 var data = new byte[4096];
-                var info = Encoding.ASCII.GetBytes($"{packet.Number}|{packet.FilePosition}|");
-                data.InsertInStartArray(info);
+                using (var stream = new PacketWriter())
+                {
+                    stream.Write(packet.Number);
+                    stream.Write(packet.FilePosition);
+                    data.InsertInStartArray(stream.ToByteArray());
+                }
                 file.Seek(packet.FilePosition, SeekOrigin.Begin);
-                file.Read(data, info.Length, data.Length - info.Length);
-                socketUDP.SendTo(data, endPoint);
+                file.Read(data, 2*sizeof(long), data.Length - 2 * sizeof(long));
+                socketUDP.SendTo(data, endPointUdp);
                 fileModel.Packets.Add(packet);
                 var percent = (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size);
                 percent = percent > 100 ? 100 : percent;
@@ -195,21 +204,44 @@ namespace ClientSocket.Services
             }
         }
 
+        private static List<long> GetInfoPacketsNumbers(byte[] infoCaming)
+        {
+            var infoPackets = new List<long>();
+            using (var stream = new PacketReader(infoCaming))
+            {
+                while (true)
+                {
+                    var packetNum = stream.ReadInt64();
+                    if (packetNum == 0)
+                    {
+                        break;
+                    }
+                    infoPackets.Add(packetNum);
+                }
+            }
+
+            return infoPackets;
+        }
+
         private long FirstSending(FileStream file, FileModel fileModel, long packetNumber)
         {
             var data = new byte[4096];
-            var info = Encoding.ASCII.GetBytes($"{packetNumber}|{file.Position}|");
+            using (var stream = new PacketWriter())
+            {
+                stream.Write(packetNumber);
+                stream.Write(file.Position);
+                data.InsertInStartArray(stream.ToByteArray());
+            }
             var packet = new PacketModel()
             {
                 Number = packetNumber,
                 IsSend = true,
-                Size = data.Length - info.Length,
+                Size = data.Length - 2*sizeof(long),
                 FilePosition = file.Position
             };
             packetNumber++;
-            data.InsertInStartArray(info);
-            file.Read(data, info.Length, data.Length - info.Length);
-            socketUDP.SendTo(data, endPoint);
+            file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
+            socketUDP.SendTo(data, endPointUdp);
             fileModel.Packets.Add(packet);
             var percent = (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size);
             percent = percent > 100 ? 100 : percent;

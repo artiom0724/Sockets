@@ -106,6 +106,7 @@ namespace ServerSocket.Sevices
                     file.Close();
                 }
                 Console.WriteLine(exc.Message);
+                Console.WriteLine(exc.StackTrace);
             }
         }
 
@@ -114,10 +115,14 @@ namespace ServerSocket.Sevices
             var data = new byte[4096];
             socket.Receive(data);
             var model = fileModels.Where(m=>m.FileName == Path.GetFileName(file.Name)).First();
-            var incomingString = Encoding.ASCII.GetString(data);
-            var packetParameters = incomingString.Split('|');
-            var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
-            var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
+            long packetNumber, filePosition;
+            byte[] writedData;
+            using (var stream = new PacketReader(data))
+            {
+                packetNumber = stream.ReadInt64();
+                filePosition = stream.ReadInt64();
+                writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
+            }
             if (model.Size - file.Length < writedData.Length)
             {
                 writedData = writedData.SubArray(0, model.Size - file.Length);
@@ -127,7 +132,7 @@ namespace ServerSocket.Sevices
             {
                 Size = writedData.Length,
                 IsCame = true,
-                Number = long.Parse(packetParameters[0])
+                Number = packetNumber
             });
             Console.Write("\rGetting... " + (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / model.Size) + "%");
         }
@@ -162,7 +167,8 @@ namespace ServerSocket.Sevices
                         RegettingMissingPackets(file, ref gettedPacketsCount);
                     }
                     gettedPacketsCount = 0;
-                    socketUDP.SendTo(Encoding.ASCII.GetBytes("Correct"), endPoint);
+                    var endpoint = (EndPoint)(new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.RemoteEndPoint)).Port + 1)));
+                    socketUDP.SendTo(Encoding.ASCII.GetBytes("Correct"), endpoint);
                 }
             }
             catch (Exception exc)
@@ -172,13 +178,14 @@ namespace ServerSocket.Sevices
                     file.Close();
                 }
                 Console.WriteLine(exc.Message);
+                Console.WriteLine(exc.StackTrace);
             }
             file.Close();
         }
 
         private void RegettingMissingPackets(FileStream file, ref long gettedPacketsCount)
         {
-            var camingPackets = udpModel.Packets.Select(x => Encoding.ASCII.GetBytes($"{x.Number.ToString()}|")).ToList();
+            var camingPackets = udpModel.Packets.Select(x => x.Number).ToList();
             while (true)
             {
                 SendCamingPackagesNumbers(camingPackets);
@@ -200,22 +207,24 @@ namespace ServerSocket.Sevices
             Console.Write("\rRegetting... " + (udpModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / udpModel.Size) + "%");
         }
 
-        private void SendCamingPackagesNumbers(List<byte[]> camingPackets)
+        private void SendCamingPackagesNumbers(List<long> camingPackets)
         {
             int offset = 0;
-            var data = new byte[4096];
-            while (true)
+            using (var stream = new PacketWriter())
             {
-                var number = camingPackets.First();
-                if (offset + number.Length > data.Length)
+                while (camingPackets.Any())
                 {
-                    break;
+                    var number = camingPackets.First();
+                    if (offset + sizeof(long) > 4096)
+                    {
+                        break;
+                    }
+                    stream.Write(number);
+                    offset += sizeof(long);
+                    camingPackets.Remove(number);
                 }
-                data.InsertInArray(offset, number);
-                offset += number.Length;
-                camingPackets.Remove(number);
+                socket.Send(stream.ToByteArray());
             }
-            socket.Send(data);
         }
 
         private void FirstDataGetting(FileStream file)
@@ -227,23 +236,28 @@ namespace ServerSocket.Sevices
         private void DataGetting(FileStream file)
         {
             var data = new byte[4096];
-            socketUDP.ReceiveFrom(data, ref endPoint);
-            var incomingString = Encoding.ASCII.GetString(data);
-            var packetParameters = incomingString.Split('|');
-            var parametersSize = Encoding.ASCII.GetBytes($"{packetParameters[0]}|{packetParameters[1]}|").Count();
-            var writedData = data.SubArray(parametersSize, data.Length - parametersSize);
+            var endpoint = (EndPoint)(new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.RemoteEndPoint)).Port + 2)));
+            socketUDP.ReceiveFrom(data, ref endpoint);
+            long packetNumber, filePosition;
+            byte[] writedData;
+            using (var stream = new PacketReader(data))
+            {
+                packetNumber = stream.ReadInt64();
+                filePosition = stream.ReadInt64();
+                writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
+            }
             if (udpModel.Size - file.Length < writedData.Length)
             {
                 writedData = writedData.SubArray(0, udpModel.Size - file.Length);
             }
-            file.Seek(long.Parse(packetParameters[1]), SeekOrigin.Begin);
+            file.Seek(filePosition, SeekOrigin.Begin);
             file.Write(writedData, 0, writedData.Length);
             udpModel.Packets.Add(new PacketModel()
             {
                 Size = writedData.Length,
                 IsCame = true,
-                Number = long.Parse(packetParameters[0]),
-                FilePosition = long.Parse(packetParameters[1])
+                Number = packetNumber,
+                FilePosition = filePosition
             });
         }
     }

@@ -65,6 +65,7 @@ namespace ClientSocket.Helpers
                 catch (Exception exc)
                 {
                     Console.WriteLine(exc.Message);
+                    Console.WriteLine(exc.StackTrace);
                 }
             }
         }

@@ -38,10 +38,10 @@ namespace ServerSocket.Helpers
                     uploadService.UploadFile(socket, endPoint.EndPoint, socketUDP, command, ProtocolType.Tcp);
                     return;
                 case CommandType.DownloadUDP:
-                    downloadService.DownloadFile(socket, endPoint.EndPointUDP, socketUDP, command, ProtocolType.Udp);
+                    downloadService.DownloadFile(socket, endPoint.EndPointUDPWrite, socketUDP, command, ProtocolType.Udp);
                     return;
                 case CommandType.UploadUDP:
-                    uploadService.UploadFile(socket, endPoint.EndPointUDPBind, socketUDPBind, command, ProtocolType.Udp);
+                    uploadService.UploadFile(socket, endPoint.EndPointUDPRead, socketUDPBind, command, ProtocolType.Udp);
                     return;
                 case CommandType.Unknown:
                     baseCommandService.UnknownHandler(socket);
