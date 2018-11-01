@@ -30,6 +30,7 @@ namespace ServerSocket.Sevices
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.ipClient = socket.RemoteEndPoint;
+            this.endPoint = endPoint;
             switch (type)
             {
                 case ProtocolType.Tcp:
@@ -45,7 +46,6 @@ namespace ServerSocket.Sevices
         private void UploadFileTCP(ServerCommand command)
         {
             FileStream file = null;
-            Console.Clear();
             FileModel model;
             var notSameClient = ipClient?.ToString().Split(":").First() != savedClient?.ToString().Split(":").First();
             try
@@ -139,7 +139,6 @@ namespace ServerSocket.Sevices
 
         private void UploadFileUDP(ServerCommand command)
         {
-            Console.Clear();
             FileStream file = null;
             try
             {
@@ -155,20 +154,26 @@ namespace ServerSocket.Sevices
                     file = File.OpenWrite(command.Parameters.First());
                 }
                 long gettedPacketsCount = 0;
-                while (file.Length < long.Parse(command.Parameters.Last()))
+                var errors = 0;
+                while (file.Length < udpModel.Size)
                 {
                     do
                     {
-                        FirstDataGetting(file);
-                        gettedPacketsCount++;
-                    } while (udpModel.Packets.Sum(x => x.Size) < udpModel.Size);
-                    while (udpModel.Size < udpModel.Packets.Sum(x => x.Size) && gettedPacketsCount < 64)
+                        if (FirstDataGetting(file))
+                        {
+                            gettedPacketsCount++;
+                        }
+                        else
+                        {
+                            errors++;
+                        }
+                    } while (udpModel.Packets.Sum(x => x.Size) < udpModel.Size && errors != 5 && gettedPacketsCount < 16);
+                    while (udpModel.Size < udpModel.Packets.Sum(x => x.Size) && gettedPacketsCount < 16)
                     {
                         RegettingMissingPackets(file, ref gettedPacketsCount);
                     }
                     gettedPacketsCount = 0;
-                    var endpoint = (EndPoint)(new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.RemoteEndPoint)).Port + 1)));
-                    socketUDP.SendTo(Encoding.ASCII.GetBytes("Correct"), endpoint);
+                    socket.Send(Encoding.ASCII.GetBytes("Correct"));
                 }
             }
             catch (Exception exc)
@@ -185,7 +190,7 @@ namespace ServerSocket.Sevices
 
         private void RegettingMissingPackets(FileStream file, ref long gettedPacketsCount)
         {
-            var camingPackets = udpModel.Packets.Select(x => x.Number).ToList();
+            var camingPackets = udpModel.Packets.TakeLast(16).Select(x => x.Number).ToList();
             while (true)
             {
                 SendCamingPackagesNumbers(camingPackets);
@@ -198,7 +203,7 @@ namespace ServerSocket.Sevices
             {
                 GettingMissingPackets(file);
                 gettedPacketsCount++;
-            } while (gettedPacketsCount < 64);
+            } while (gettedPacketsCount < 16);
         }
 
         private void GettingMissingPackets(FileStream file)
@@ -227,17 +232,21 @@ namespace ServerSocket.Sevices
             }
         }
 
-        private void FirstDataGetting(FileStream file)
+        private bool FirstDataGetting(FileStream file)
         {
-            DataGetting(file);
+            var receive = DataGetting(file);
             Console.Write("\rGetting... " + (udpModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / udpModel.Size) + "%");
+            return receive;
         }
 
-        private void DataGetting(FileStream file)
+        private bool DataGetting(FileStream file)
         {
             var data = new byte[4096];
-            var endpoint = (EndPoint)(new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.RemoteEndPoint)).Port + 2)));
-            socketUDP.ReceiveFrom(data, ref endpoint);
+            var receive = socketUDP.ReceiveFrom(data, ref endPoint);
+            if (receive == 0)
+            {
+                return false;
+            }
             long packetNumber, filePosition;
             byte[] writedData;
             using (var stream = new PacketReader(data))
@@ -259,6 +268,12 @@ namespace ServerSocket.Sevices
                 Number = packetNumber,
                 FilePosition = filePosition
             });
+            return true;
+        }
+
+        private void MinimizeList()
+        {
+
         }
     }
 }

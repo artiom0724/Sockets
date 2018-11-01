@@ -31,10 +31,9 @@ namespace ClientSocket.Services
                     EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
                 };
                 socket.Connect(endPointModel.EndPoint);
-                endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)socket.LocalEndPoint).Address, (((IPEndPoint)socket.LocalEndPoint).Port + 1));
-                endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)socket.LocalEndPoint).Address, (((IPEndPoint)socket.LocalEndPoint).Port + 2));
+                endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.RemoteEndPoint)).Port + 2));
+                endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 1));
                 socketUDPWrite = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socketUDPWrite.Bind(endPointModel.EndPointUDPWrite);
                 socketUDPRead = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 socketUDPRead.Bind(endPointModel.EndPointUDPRead);
             }

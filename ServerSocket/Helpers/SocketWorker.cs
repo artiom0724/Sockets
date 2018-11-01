@@ -27,35 +27,52 @@ namespace ServerSocket.Helpers
             {
                 try
                 {
-                    socket = CreateSocket(ProtocolType.Tcp, endPointModel.EndPoint);
-                    endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 1));
-                    endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 2));
-                    socketUDPWrite = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPWrite);
-                    socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
+                    OpenSockets();
                     MonitorPort();
-                    socket.Close();
-                    socketUDPWrite.Close();
-                    socketUDPRead.Close();
+                    CloseSockets();
                     Console.WriteLine("\nDisconnect");
                 }
                 catch (Exception exc)
                 {
-                    if (socket != null)
-                    {
-                        socket.Close();
-                    }
-                    if(socketUDPWrite != null)
-                    {
-                        socketUDPWrite.Close();
-                    }
-                    if (socketUDPWrite != null)
-                    {
-                        socketUDPRead.Close();
-                    }
+                    ExceptionCloseSockets();
                     Console.WriteLine(exc.Message);
                     Console.WriteLine(exc.StackTrace);
                 }
             }
+        }
+
+        private void ExceptionCloseSockets()
+        {
+            if (socket != null)
+            {
+                socket.Close();
+                socket = null;
+            }
+            if (socketUDPWrite != null)
+            {
+                socketUDPWrite.Close();
+                socketUDPWrite = null;
+            }
+            if (socketUDPWrite != null)
+            {
+                socketUDPRead.Close();
+                socketUDPRead = null;
+            }
+        }
+
+        private void OpenSockets()
+        {
+            socket = CreateSocket(ProtocolType.Tcp, endPointModel.EndPoint);
+        }
+
+        private void CloseSockets()
+        {
+            socket.Close();
+            socketUDPWrite.Close();
+            socketUDPRead.Close();
+            socket = null;
+            socketUDPWrite = null;
+            socketUDPRead = null;
         }
 
         private void MonitorPort()
@@ -63,6 +80,10 @@ namespace ServerSocket.Helpers
             while (true)
             {
                 Socket handler = socket.Accept();
+                if (handler.Connected)
+                {
+                    ConnectUdpSockets(handler);
+                }
                 Console.WriteLine ($"Connected client with address {handler.RemoteEndPoint.ToString()}");
                 while (handler.Connected)
                 {
@@ -91,6 +112,14 @@ namespace ServerSocket.Helpers
                     }
                 }
             }
+        }
+
+        private void ConnectUdpSockets(Socket handler)
+        {
+            endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(handler.RemoteEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 1));
+            endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.LocalEndPoint)).Port + 2));
+            socketUDPWrite = CreateSocket(ProtocolType.Udp);
+            socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
         }
 
         private Socket CreateSocket(ProtocolType type, EndPoint endPoint = null)
