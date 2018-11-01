@@ -182,7 +182,7 @@ namespace ClientSocket.Services
 
         private void RegettingMissingPackets(FileStream file, ref long countCamingPackets)
         {
-            var camingPackets = fileModel.Packets.Select(x => x.Number)).ToList();
+            var camingPackets = fileModel.Packets.Select(x => x.Number).ToList();
             while (true)
             {
                 if (!camingPackets.Any())

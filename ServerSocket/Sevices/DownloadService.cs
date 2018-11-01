@@ -111,7 +111,7 @@ namespace ServerSocket.Sevices
             file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socket.Send(data);
             fileModel.Packets.Add(packet);
-            Console.WriteLine("\rSending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\rSending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
 
@@ -184,7 +184,7 @@ namespace ServerSocket.Sevices
                 file.Read(data, 2*sizeof(long), data.Length - 2 * sizeof(long));
                 socketUDP.SendTo(data, endPointUdp);
                 fileModel.Packets.Add(packet);
-                Console.WriteLine("\rResending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
+                Console.Write("\rResending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
             }
         }
 
@@ -227,7 +227,7 @@ namespace ServerSocket.Sevices
             file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socketUDP.SendTo(data, endPointUdp);
             fileModel.Packets.Add(packet);
-            Console.WriteLine("\rSending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\rSending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
     }
