@@ -54,7 +54,7 @@ namespace ClientSocket.Services
                 fileModel = new FileModel()
                 {
                     FileName = file.Name,
-                    Size = int.Parse(parameters[0])
+                    Size = long.Parse(parameters[0])
                 };
             }
             if (file.Length > 0 && file.Length < fileModel.Size)
