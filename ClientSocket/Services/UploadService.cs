@@ -40,7 +40,7 @@ namespace ClientSocket.Services
             long timeAwait = 0;
             var packetNumber = 0;
             var file = File.OpenRead(fileName);
-            var uploaded = int.Parse(parameters[0]);
+            var uploaded = long.Parse(parameters[0]);
             var fileModel = new FileModel()
             {
                 FileName = fileName,
