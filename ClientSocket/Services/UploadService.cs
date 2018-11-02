@@ -117,7 +117,7 @@ namespace ClientSocket.Services
 
         private ActionResult UploadFileUDP(string fileName)
         {
-            FileStream file = null; ;
+            FileStream file = null;
             try
             {
                 file = File.OpenRead(fileName);

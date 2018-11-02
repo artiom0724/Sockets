@@ -84,7 +84,9 @@ namespace ServerSocket.Sevices
                     }
                     else
                     {
-                        File.Delete(file.Name);
+                        var tempFileName = file.Name;
+                        file.Close();
+                        File.Delete(tempFileName);
                         file = File.OpenWrite(command.Parameters.First());
                     }
                 }
@@ -150,8 +152,10 @@ namespace ServerSocket.Sevices
                 };
                 if (file.Length > 0)
                 {
-                    File.Delete(file.Name);
-                    file = File.OpenWrite(command.Parameters.First());
+                    var fileName = file.Name;
+                    file.Close();
+                    File.Delete(fileName);
+                    file = File.OpenWrite(fileName);
                 }
                 long gettedPacketsCount = 0;
                 var errors = 0;
