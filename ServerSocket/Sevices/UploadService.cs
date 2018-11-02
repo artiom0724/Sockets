@@ -99,6 +99,7 @@ namespace ServerSocket.Sevices
                 {
                     GettingProcess(file);
                 }
+                fileModels.RemoveAll(x => x.FileName == model.FileName);
                 file.Close();
             }
             catch (Exception exc)

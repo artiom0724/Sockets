@@ -79,6 +79,7 @@ namespace ClientSocket.Services
             {
                 DownloadingProcess(file);
             }
+            fileModel = null;
             file.Close();
             return new ActionResult()
             {
