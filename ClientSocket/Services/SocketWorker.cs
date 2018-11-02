@@ -25,18 +25,31 @@ namespace ClientSocket.Services
         {
             if (socket == null && socketUDPWrite == null && socketUDPRead == null)
             {
-                socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 endPointModel = new TripleEndPointModel()
                 {
                     EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
                 };
-                socket.Connect(endPointModel.EndPoint);
+                socket = CreateSocket(ProtocolType.Tcp, endPointModel.EndPoint);
                 endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.RemoteEndPoint)).Port + 2));
                 endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 1));
-                socketUDPWrite = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socketUDPRead = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                socketUDPRead.Bind(endPointModel.EndPointUDPRead);
+                socketUDPWrite = CreateSocket(ProtocolType.Udp);
+                socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
             }
+        }
+
+        private Socket CreateSocket(ProtocolType type, EndPoint endPoint = null)
+        {
+            var newSocket = new Socket(AddressFamily.InterNetwork, type == ProtocolType.Udp ? SocketType.Dgram : SocketType.Stream, type);
+            if (endPoint != null && ProtocolType.Udp == type)
+            {
+                newSocket.Bind(endPoint);
+            }
+            if (type == ProtocolType.Tcp)
+            {
+                newSocket.Connect(endPoint);
+            }
+
+            return newSocket;
         }
 
         public void DisconnectSocket()
