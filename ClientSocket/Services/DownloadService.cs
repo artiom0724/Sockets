@@ -49,7 +49,7 @@ namespace ClientSocket.Services
             long timeAwait = 0;
             var file = File.OpenWrite(fileName);
             var data = new byte[4096];
-            if (ipClient != endPoint || (fileModel != null && file.Name != fileModel.FileName))
+            if (fileModel == null || ipClient != endPoint || file.Name != fileModel.FileName)
             {
                 fileModel = new FileModel()
                 {
