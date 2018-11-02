@@ -116,8 +116,8 @@ namespace ServerSocket.Helpers
 
         private void ConnectUdpSockets(Socket handler)
         {
-            endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(handler.RemoteEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 1));
-            endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.LocalEndPoint)).Port + 2));
+            endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.LocalEndPoint)).Port + 1));
+            endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(handler.RemoteEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 2));
             socketUDPWrite = CreateSocket(ProtocolType.Udp);
             socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
         }
