@@ -96,6 +96,7 @@ namespace ClientSocket.Services
                 Size = data.Length - 2 * sizeof(long)
             };
             packetNumber++;
+            file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socket.Send(data);
             fileModel.Packets.Add(packet);
             var percent = ((fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100) / fileModel.Size);
