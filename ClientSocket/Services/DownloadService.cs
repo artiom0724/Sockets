@@ -79,11 +79,12 @@ namespace ClientSocket.Services
             {
                 DownloadingProcess(file);
             }
+            var fileModelSize = fileModel.Size;
             fileModel = null;
             file.Close();
             return new ActionResult()
             {
-                FileSize = fileModel.Size,
+                FileSize = fileModelSize,
                 TimeAwait = timeAwait
             };
         }
