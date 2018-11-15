@@ -105,7 +105,7 @@ namespace ServerSocket.Sevices
 					return false;
 				}
 			}
-			while (Encoding.ASCII.GetString(windowResponseData).Contains("next") && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size);
+			while (!Encoding.ASCII.GetString(windowResponseData).Contains("next"));
 			return true;
 		}
 
