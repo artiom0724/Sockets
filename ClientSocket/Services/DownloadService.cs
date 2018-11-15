@@ -269,7 +269,7 @@ namespace ClientSocket.Services
             }
 			if (file.Position != filePosition)
 			{
-				file.Seek(filePosition, SeekOrigin.Begin);
+				file.Seek((int)filePosition, SeekOrigin.Begin);
 			}
             file.Write(writedData, 0, writedData.Length);
             fileModel.Packets.Add(new PacketModel()
