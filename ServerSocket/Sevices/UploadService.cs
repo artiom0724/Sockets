@@ -130,6 +130,7 @@ namespace ServerSocket.Sevices
             {
                 writedData = writedData.SubArray(0, model.Size - file.Length);
             }
+			file.Seek(filePosition, SeekOrigin.Begin);
             file.Write(writedData, 0, writedData.Length);
             model.Packets.Add(new PacketModel()
             {

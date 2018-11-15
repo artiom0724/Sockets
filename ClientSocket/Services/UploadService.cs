@@ -38,7 +38,7 @@ namespace ClientSocket.Services
         private ActionResult UploadFileTCP(string fileName, string[] parameters)
         {
             long timeAwait = 0;
-            var packetNumber = 0;
+            long packetNumber = 0;
             var file = File.OpenRead(fileName);
             var uploaded = long.Parse(parameters[0]);
             var fileModel = new FileModel()
@@ -80,7 +80,7 @@ namespace ClientSocket.Services
             };
         }
 
-        private int UploadingProcess(int packetNumber, FileStream file, FileModel fileModel)
+        private long UploadingProcess(long packetNumber, FileStream file, FileModel fileModel)
         {
             var data = new byte[4096];
             using (var stream = new PacketWriter())
