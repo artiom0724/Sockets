@@ -121,8 +121,8 @@ namespace ClientSocket.Services
 		private bool DownloadingProcess(FileStream file)
 		{
 			var data = new byte[4096];
-			
-			var received = socket.Receive(data); 
+
+			var received = socket.Receive(data);
 			if (received <= 0)
 			{
 				return false;
@@ -134,24 +134,25 @@ namespace ClientSocket.Services
 				packetNumber = stream.ReadInt64();
 				filePosition = stream.ReadInt64();
 				writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
-
-				if (fileModel.Size - file.Length < writedData.Length)
-				{
-					writedData = writedData.SubArray(0, fileModel.Size - file.Length);
-				}
-				Console.WriteLine($"{file.Position} != {filePosition}");
-				if (filePosition % 4080 == 0)
-				{
-					file.Seek(filePosition, SeekOrigin.Begin);
-				}
-				file.Write(writedData, 0, writedData.Length);
-				fileModel.Packets.Add(new PacketModel()
-				{
-					Size = writedData.LongLength,
-					IsCame = true,
-					Number = packetNumber
-				});
 			}
+
+
+			if (fileModel.Size - file.Length < writedData.Length)
+			{
+				writedData = writedData.SubArray(0, fileModel.Size - file.Length);
+			}
+			Console.WriteLine($"{file.Position} != {filePosition}");
+			if (filePosition % 4080 != 0)
+			{
+				return false;
+			}
+			file.Write(writedData, 0, writedData.Length);
+			fileModel.Packets.Add(new PacketModel()
+			{
+				Size = writedData.LongLength,
+				IsCame = true,
+				Number = packetNumber
+			});
 			Console.Write("\rDownloading... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
 			return true;
 		}
