@@ -135,7 +135,7 @@ namespace ClientSocket.Services
 				filePosition = stream.ReadInt64();
 				writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
 			}
-			if(packetNumber != (fileModel.Packets.Max(x=>x.Number) + 1))
+			if(fileModel.Packets.Any() && packetNumber != (fileModel.Packets.Max(x=>x.Number) + 1))
 			{
 				return false;
 			}
