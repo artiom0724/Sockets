@@ -79,7 +79,9 @@ namespace ServerSocket.Sevices
 					{
 						if(!CheckWindow(fileModel))
 						{
-							fileModel.Packets.Clear();
+							packetNumber = fileModel.Packets.Count / 16;
+							fileModel.Packets.RemoveRange((int)packetNumber, fileModel.Packets.Count % 16);
+							file.Seek(fileModel.Packets.LastOrDefault() == null? 0 : fileModel.Packets.LastOrDefault().FilePosition, SeekOrigin.Begin);
 						}
 						windowPackets = 0;
 					}

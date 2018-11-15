@@ -145,10 +145,6 @@ namespace ClientSocket.Services
 				writedData = writedData.SubArray(0, fileModel.Size - file.Length);
 			}
 			Console.WriteLine($"  {packetNumber} ===> {filePosition}");
-			if (filePosition % 4080 == 0)
-			{
-				file.Seek(filePosition, SeekOrigin.Begin);
-			}
 			file.Write(writedData, 0, writedData.Length);
 			fileModel.Packets.Add(new PacketModel()
 			{
