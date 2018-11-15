@@ -135,16 +135,14 @@ namespace ClientSocket.Services
 				filePosition = stream.ReadInt64();
 				writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
 			}
-
-
 			if (fileModel.Size - file.Length < writedData.Length)
 			{
 				writedData = writedData.SubArray(0, fileModel.Size - file.Length);
 			}
-			Console.WriteLine($"{file.Position} != {filePosition}");
-			if (filePosition % 4080 != 0)
+			Console.WriteLine($"  {packetNumber} ===> {filePosition}");
+			if (filePosition % 4080 == 0)
 			{
-				return false;
+				file.Seek(filePosition, SeekOrigin.Begin);
 			}
 			file.Write(writedData, 0, writedData.Length);
 			fileModel.Packets.Add(new PacketModel()

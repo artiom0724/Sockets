@@ -75,17 +75,12 @@ namespace ServerSocket.Sevices
 						packetNumber = SendingProcess(file, fileModel, packetNumber);
 						windowPackets++;
 					}
-					else if(fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
+					if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
 					{
-						var windowResponseData = new byte[1024];
-						do
-						{
-							socket.Receive(windowResponseData);
-						}
-						while (Encoding.ASCII.GetString(windowResponseData).Contains("next") && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size);
+						CheckWindow(fileModel);
 						windowPackets = 0;
 					}
-                }
+				}
                 file.Close();
             }
             catch (FileNotFoundException ex)
@@ -96,7 +91,17 @@ namespace ServerSocket.Sevices
             }
         }
 
-        private string CheckFileExists(FileStream file)
+		private void CheckWindow(FileModel fileModel)
+		{
+			var windowResponseData = new byte[1024];
+			do
+			{
+				socket.Receive(windowResponseData);
+			}
+			while (Encoding.ASCII.GetString(windowResponseData).Contains("next") && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size);
+		}
+
+		private string CheckFileExists(FileStream file)
         {
             var parameters = Encoding.ASCII.GetBytes($"{file.Length}|");
             socket.Send(parameters);
