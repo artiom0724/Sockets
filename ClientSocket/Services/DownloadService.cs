@@ -82,7 +82,7 @@ namespace ClientSocket.Services
 				{
 					windowPackets++;
 				}
-				if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
+				if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) >= fileModel.Size)
 				{
 					windowPackets = 0;
 					socket.Send(Encoding.ASCII.GetBytes("next|"));

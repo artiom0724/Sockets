@@ -75,7 +75,7 @@ namespace ServerSocket.Sevices
 						packetNumber = SendingProcess(file, fileModel, packetNumber);
 						windowPackets++;
 					}
-					if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) >= fileModel.Size)
+					if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) >= fileModel.Size)
 					{
 						if(!CheckWindow(fileModel))
 						{
