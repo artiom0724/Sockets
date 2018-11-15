@@ -77,7 +77,10 @@ namespace ServerSocket.Sevices
 					}
 					if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) >= fileModel.Size)
 					{
-						CheckWindow(fileModel);
+						if(!CheckWindow(fileModel))
+						{
+							fileModel.Packets.Clear();
+						}
 						windowPackets = 0;
 					}
 				}
@@ -91,14 +94,19 @@ namespace ServerSocket.Sevices
             }
         }
 
-		private void CheckWindow(FileModel fileModel)
+		private bool CheckWindow(FileModel fileModel)
 		{
 			var windowResponseData = new byte[1024];
 			do
 			{
 				socket.Receive(windowResponseData);
+				if(Encoding.ASCII.GetString(windowResponseData).Contains("error"))
+				{
+					return false;
+				}
 			}
 			while (Encoding.ASCII.GetString(windowResponseData).Contains("next") && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size);
+			return true;
 		}
 
 		private string CheckFileExists(FileStream file)
