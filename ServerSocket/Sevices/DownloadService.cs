@@ -66,9 +66,25 @@ namespace ServerSocket.Sevices
                     });
                     packetNumber++;
                 }
-                while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length)
+				var windowPackets = 0;
+
+				while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length)
                 {
-                    packetNumber = SendingProcess(file, fileModel, packetNumber);
+					if (windowPackets != 16)
+					{
+						packetNumber = SendingProcess(file, fileModel, packetNumber);
+						windowPackets++;
+					}
+					else if(fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
+					{
+						var windowResponseData = new byte[1024];
+						do
+						{
+							socket.Receive(windowResponseData);
+						}
+						while (Encoding.ASCII.GetString(windowResponseData).Contains("next") && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size);
+						windowPackets = 0;
+					}
                 }
                 file.Close();
             }

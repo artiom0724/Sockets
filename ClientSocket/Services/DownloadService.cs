@@ -74,10 +74,19 @@ namespace ClientSocket.Services
                 });
             }
             socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
+			var windowPackets = 0;
 
-            while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
+			while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
             {
-                DownloadingProcess(file);
+				if (DownloadingProcess(file))
+				{
+					windowPackets++;
+				}
+				if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
+				{
+					windowPackets = 0;
+					socket.Send(Encoding.ASCII.GetBytes("next|"));
+				}
             }
             var fileModelSize = fileModel.Size;
             fileModel = null;
@@ -109,10 +118,15 @@ namespace ClientSocket.Services
             return timeAwait;
         }
 
-		private void DownloadingProcess(FileStream file)
+		private bool DownloadingProcess(FileStream file)
 		{
 			var data = new byte[4096];
-			socket.Receive(data);
+			
+			var received = socket.Receive(data); 
+			if (received <= 0)
+			{
+				return false;
+			}
 			long packetNumber, filePosition;
 			byte[] writedData;
 			using (var stream = new PacketReader(data))
@@ -139,6 +153,7 @@ namespace ClientSocket.Services
 				});
 			}
 			Console.Write("\rDownloading... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+			return true;
 		}
 
         public ActionResult DownloadFileUDP(string fileName, string[] parameters)
