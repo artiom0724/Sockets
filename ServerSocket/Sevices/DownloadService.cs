@@ -112,7 +112,9 @@ namespace ServerSocket.Sevices
             using (var stream = new PacketWriter())
             {
                 stream.Write(packetNumber);
-                stream.Write(file.Position);
+				long fileposition = file.Position;
+
+				stream.Write(fileposition);
                 data.InsertInStartArray(stream.ToByteArray());
             }
             var packet = new PacketModel()
@@ -237,8 +239,10 @@ namespace ServerSocket.Sevices
             using (var stream = new PacketWriter())
             {
                 stream.Write(packetNumber);
-                stream.Write(file.Position);
-                data.InsertInStartArray(stream.ToByteArray());
+				long fileposition = file.Position;
+
+				stream.Write(fileposition);
+				data.InsertInStartArray(stream.ToByteArray());
             }
             var packet = new PacketModel()
             {
