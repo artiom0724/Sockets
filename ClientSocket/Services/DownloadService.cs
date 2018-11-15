@@ -125,6 +125,7 @@ namespace ClientSocket.Services
             {
                 writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
+			Console.WriteLine($"{file.Position} != {filePosition}");
 			if (file.Position != filePosition)
 			{
 				file.Seek((int)filePosition, SeekOrigin.Begin);
