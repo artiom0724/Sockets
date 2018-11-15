@@ -267,7 +267,10 @@ namespace ClientSocket.Services
             {
                 writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
-            file.Seek(filePosition, SeekOrigin.Begin);
+			if (file.Position != filePosition)
+			{
+				file.Seek(filePosition, SeekOrigin.Begin);
+			}
             file.Write(writedData, 0, writedData.Length);
             fileModel.Packets.Add(new PacketModel()
             {
