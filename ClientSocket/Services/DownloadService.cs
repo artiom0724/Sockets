@@ -109,36 +109,37 @@ namespace ClientSocket.Services
             return timeAwait;
         }
 
-        private void DownloadingProcess(FileStream file)
-        {
-            var data = new byte[4096];
-            socket.Receive(data);
-            long packetNumber, filePosition;
-            byte[] writedData ;
-            using (var stream = new PacketReader(data))
-            {
-                 packetNumber = stream.ReadInt64();
-                 filePosition = stream.ReadInt64();
-                 writedData = stream.ReadBytes(data.Length - 2*sizeof(long));
-            }
-            if (fileModel.Size - file.Length < writedData.Length)
-            {
-                writedData = writedData.SubArray(0, fileModel.Size - file.Length);
-            }
-			Console.WriteLine($"{file.Position} != {filePosition}");
-			if (filePosition % 4080 == 0) 
+		private void DownloadingProcess(FileStream file)
+		{
+			var data = new byte[4096];
+			socket.Receive(data);
+			long packetNumber, filePosition;
+			byte[] writedData;
+			using (var stream = new PacketReader(data))
 			{
-				file.Seek(filePosition, SeekOrigin.Begin);
+				packetNumber = stream.ReadInt64();
+				filePosition = stream.ReadInt64();
+				writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
+
+				if (fileModel.Size - file.Length < writedData.Length)
+				{
+					writedData = writedData.SubArray(0, fileModel.Size - file.Length);
+				}
+				Console.WriteLine($"{file.Position} != {filePosition}");
+				if (filePosition % 4080 == 0)
+				{
+					file.Seek(filePosition, SeekOrigin.Begin);
+				}
+				file.Write(writedData, 0, writedData.Length);
+				fileModel.Packets.Add(new PacketModel()
+				{
+					Size = writedData.LongLength,
+					IsCame = true,
+					Number = packetNumber
+				});
 			}
-			file.Write(writedData, 0, writedData.Length);
-            fileModel.Packets.Add(new PacketModel()
-            {
-                Size = writedData.LongLength,
-                IsCame = true,
-                Number = packetNumber
-            });
-            Console.Write("\rDownloading... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
-        }
+			Console.Write("\rDownloading... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+		}
 
         public ActionResult DownloadFileUDP(string fileName, string[] parameters)
         {
