@@ -126,9 +126,9 @@ namespace ClientSocket.Services
                 writedData = writedData.SubArray(0, fileModel.Size - file.Length);
             }
 			Console.WriteLine($"{file.Position} != {filePosition}");
-			if (file.Position != filePosition)
+			if (filePosition % 4080 == 0) 
 			{
-				file.Seek((int)filePosition, SeekOrigin.Begin);
+				file.Seek(filePosition, SeekOrigin.Begin);
 			}
 			file.Write(writedData, 0, writedData.Length);
             fileModel.Packets.Add(new PacketModel()
