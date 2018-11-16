@@ -80,11 +80,6 @@ namespace ClientSocket.Services
             {
 				if (DownloadingProcess(file))
 				{
-					windowPackets++;
-				}
-				if(windowPackets == 1 || fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) >= fileModel.Size)
-				{
-					windowPackets = 0;
 					socket.Send(Encoding.ASCII.GetBytes("next|"));
 				}
             }
