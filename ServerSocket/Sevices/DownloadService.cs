@@ -66,17 +66,16 @@ namespace ServerSocket.Sevices
                     });
                     packetNumber++;
                 }
-				var windowPackets = 0;
 
 				while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length)
 				{
 					packetNumber = SendingProcess(file, fileModel, packetNumber);
-					windowPackets++;
 
 					if (!CheckWindow(fileModel))
 					{
 						file.Seek(fileModel.Packets.Last().FilePosition, SeekOrigin.Begin);
 						fileModel.Packets.RemoveAt(fileModel.Packets.Count - 1);
+						packetNumber = fileModel.Packets.Count;
 					}
 				}
                 file.Close();
