@@ -158,7 +158,7 @@ namespace ServerSocket.Sevices
                 udpModel = new FileModel()
                 {
                     FileName = file.Name,
-                    Size = int.Parse(command.Parameters[1])
+                    Size = long.Parse(command.Parameters[1])
                 };
                 if (file.Length > 0)
                 {
