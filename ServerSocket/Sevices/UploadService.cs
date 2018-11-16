@@ -40,7 +40,8 @@ namespace ServerSocket.Sevices
                     UploadFileUDP(command);
                     break;
             }
-            savedClient = socket.RemoteEndPoint;
+			udpModel = null;
+			savedClient = socket.RemoteEndPoint;
         }
 
         private void UploadFileTCP(ServerCommand command)

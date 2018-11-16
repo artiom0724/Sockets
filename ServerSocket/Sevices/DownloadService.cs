@@ -75,7 +75,7 @@ namespace ServerSocket.Sevices
 
 					if (!CheckWindow(fileModel))
 					{
-						file.Seek(fileModel.Packets.LastOrDefault() == null ? 0 : fileModel.Packets.LastOrDefault().FilePosition, SeekOrigin.Begin);
+						file.Seek(fileModel.Packets.Last().FilePosition, SeekOrigin.Begin);
 						fileModel.Packets.RemoveAt(fileModel.Packets.Count - 1);
 					}
 				}
@@ -92,16 +92,8 @@ namespace ServerSocket.Sevices
 		private bool CheckWindow(FileModel fileModel)
 		{
 			var windowResponseData = new byte[1024];
-			do
-			{
-				socket.Receive(windowResponseData);
-				if(Encoding.ASCII.GetString(windowResponseData).Contains("error"))
-				{
-					return false;
-				}
-			}
-			while (!Encoding.ASCII.GetString(windowResponseData).Contains("next"));
-			return true;
+			socket.Receive(windowResponseData);
+			return Encoding.ASCII.GetString(windowResponseData).Contains("next");
 		}
 
 		private string CheckFileExists(FileStream file)
@@ -129,7 +121,8 @@ namespace ServerSocket.Sevices
             {
                 Number = packetNumber,
                 IsSend = true,
-                Size = data.Length - 2*sizeof(long)
+                Size = data.Length - 2*sizeof(long),
+				FilePosition = file.Position
             };
             packetNumber++;
             file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));

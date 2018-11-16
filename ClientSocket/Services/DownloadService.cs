@@ -33,12 +33,14 @@ namespace ClientSocket.Services
             {
                 case ProtocolType.Tcp:
                     returning = DownloadFileTCP(fileName, parameters);
-                    ipClient = endPoint;
+					fileModel = null;
+					ipClient = endPoint;
                     return returning;
                 case ProtocolType.Udp:
                     returning = DownloadFileUDP(fileName, parameters);
                     ipClient = endPoint;
-                    return returning;
+					fileModel = null;
+					return returning;
                 default:
                     return returning;
             }
@@ -74,7 +76,6 @@ namespace ClientSocket.Services
                 });
             }
             socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
-			var windowPackets = 0;
 
 			while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
             {
@@ -140,6 +141,7 @@ namespace ClientSocket.Services
 				writedData = writedData.SubArray(0, fileModel.Size - file.Length);
 			}
 			Console.WriteLine($"  {packetNumber} ===> {filePosition}");
+			file.Seek(filePosition, SeekOrigin.Begin);
 			file.Write(writedData, 0, writedData.Length);
 			fileModel.Packets.Add(new PacketModel()
 			{
