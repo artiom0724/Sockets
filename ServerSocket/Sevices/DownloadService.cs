@@ -69,20 +69,14 @@ namespace ServerSocket.Sevices
 				var windowPackets = 0;
 
 				while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length)
-                {
-					if (windowPackets != 1)
+				{
+					packetNumber = SendingProcess(file, fileModel, packetNumber);
+					windowPackets++;
+
+					if (!CheckWindow(fileModel))
 					{
-						packetNumber = SendingProcess(file, fileModel, packetNumber);
-						windowPackets++;
-					}
-					if(windowPackets == 1 || fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) >= fileModel.Size)
-					{
-						if(!CheckWindow(fileModel))
-						{
-							fileModel.Packets.RemoveAt(fileModel.Packets.Count - 1);
-							file.Seek(fileModel.Packets.LastOrDefault() == null? 0 : fileModel.Packets.LastOrDefault().FilePosition, SeekOrigin.Begin);
-						}
-						windowPackets = 0;
+						file.Seek(fileModel.Packets.LastOrDefault() == null ? 0 : fileModel.Packets.LastOrDefault().FilePosition, SeekOrigin.Begin);
+						fileModel.Packets.RemoveAt(fileModel.Packets.Count - 1);
 					}
 				}
                 file.Close();

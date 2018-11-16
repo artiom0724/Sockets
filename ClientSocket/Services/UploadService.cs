@@ -74,7 +74,6 @@ namespace ClientSocket.Services
 				socket.Receive(windowResponseData);
 				if(Encoding.ASCII.GetString(windowResponseData).Contains("error"))
 				{
-					packetNumber--;
 					file.Seek(fileModel.Packets.Last().FilePosition, SeekOrigin.Begin);
 					fileModel.Packets.Remove(fileModel.Packets.Last());
 				}
