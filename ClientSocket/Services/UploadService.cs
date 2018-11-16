@@ -70,6 +70,14 @@ namespace ClientSocket.Services
             while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < fileModel.Size)
             {
                 packetNumber = UploadingProcess(packetNumber, file, fileModel);
+				var windowResponseData = new byte[1024];
+				socket.Receive(windowResponseData);
+				if(Encoding.ASCII.GetString(windowResponseData).Contains("error"))
+				{
+					packetNumber--;
+					file.Seek(fileModel.Packets.Last().FilePosition, SeekOrigin.Begin);
+					fileModel.Packets.Remove(fileModel.Packets.Last());
+				}
             }
             var fileLength = file.Length;
             file.Close();

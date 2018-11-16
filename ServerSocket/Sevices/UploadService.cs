@@ -113,7 +113,7 @@ namespace ServerSocket.Sevices
             }
         }
 
-        private void GettingProcess(FileStream file)
+        private bool GettingProcess(FileStream file)
         {
             var data = new byte[4096];
             socket.Receive(data);
@@ -126,6 +126,11 @@ namespace ServerSocket.Sevices
                 filePosition = stream.ReadInt64();
                 writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
             }
+			if(packetNumber != model.Packets.Count)
+			{
+				socket.Send(Encoding.ASCII.GetBytes($"error|"));
+				return false;
+			}
             if (model.Size - file.Length < writedData.Length)
             {
                 writedData = writedData.SubArray(0, model.Size - file.Length);
@@ -139,6 +144,8 @@ namespace ServerSocket.Sevices
                 Number = packetNumber
             });
             Console.Write("\rGetting... " + (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / model.Size) + "%");
+			socket.Send(Encoding.ASCII.GetBytes("next|"));
+			return true;
         }
 
         private void UploadFileUDP(ServerCommand command)

@@ -70,17 +70,16 @@ namespace ServerSocket.Sevices
 
 				while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length)
                 {
-					if (windowPackets != 16)
+					if (windowPackets != 1)
 					{
 						packetNumber = SendingProcess(file, fileModel, packetNumber);
 						windowPackets++;
 					}
-					if(windowPackets == 16 || fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) >= fileModel.Size)
+					if(windowPackets == 1 || fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) >= fileModel.Size)
 					{
 						if(!CheckWindow(fileModel))
 						{
-							packetNumber = fileModel.Packets.Count / 16;
-							fileModel.Packets.RemoveRange((int)packetNumber, fileModel.Packets.Count % 16);
+							fileModel.Packets.RemoveAt(fileModel.Packets.Count - 1);
 							file.Seek(fileModel.Packets.LastOrDefault() == null? 0 : fileModel.Packets.LastOrDefault().FilePosition, SeekOrigin.Begin);
 						}
 						windowPackets = 0;
