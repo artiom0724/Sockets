@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using ClientSocket.Helpers;
 using ClientSocket.Models;
 
 namespace ClientSocket.Services
@@ -84,11 +85,19 @@ namespace ClientSocket.Services
 
             if (type == ProtocolType.Tcp)
             {
-                socket.Receive(data);
-                var incomingString = Encoding.ASCII.GetString(data);
-                var parameters = incomingString.Split('|');
-                return parameters;
-            }
+				var receivedBytes = 0;
+				using (var stream = new PacketWriter())
+				{
+					do
+					{
+						receivedBytes += socket.Receive(data);
+						stream.Write(data.SubArray(0, receivedBytes));
+					} while (receivedBytes < 4096);
+					data = stream.ToByteArray();
+				}
+				var incomingString = Encoding.ASCII.GetString(data);
+				var parameters = incomingString.Split('|');
+			}
             return new string[1];
         }
     }

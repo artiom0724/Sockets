@@ -47,54 +47,62 @@ namespace ClientSocket.Services
         }
 
         public ActionResult DownloadFileTCP(string fileName, string[] parameters)
-        {
-            long timeAwait = 0;
-            var file = File.OpenWrite(fileName);
-            var data = new byte[4096];
-            if (fileModel == null || ipClient != endPoint || file.Name != fileModel.FileName)
-            {
-                fileModel = new FileModel()
-                {
-                    FileName = file.Name,
-                    Size = long.Parse(parameters[0])
-                };
-            }
-            if (file.Length > 0 && file.Length < fileModel.Size)
-            {
-                timeAwait = ContinueDownloading(file);
-                if (timeAwait == 0)
-                {
-                    socket.Send(Encoding.ASCII.GetBytes($"break|"));
-                    file.Close();
-                    return new ActionResult();
-                }
-                fileModel.Packets.Add(new PacketModel()
-                {
-                    Size = file.Length,
-                    IsCame = true,
-                    Number = 0
-                });
-            }
-            socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
-
+		{
+			long timeAwait = 0;
+			var file = File.OpenWrite(fileName);
+			var data = new byte[4096];
+			timeAwait = CheckFileAndFileParameters(parameters, timeAwait, file);
+			if(timeAwait == -1)
+			{
+				return new ActionResult();
+			}
+			socket.Send((new byte[4096]).InsertInStartArray(Encoding.ASCII.GetBytes($"{file.Length}|")));
+			var streamTCPWriter = new PacketWriter();
 			while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < fileModel.Size)
-            {
-				if (DownloadingProcess(file))
-				{
-					socket.Send(Encoding.ASCII.GetBytes("next|"));
-				}
-            }
-            var fileModelSize = fileModel.Size;
-            fileModel = null;
-            file.Close();
-            return new ActionResult()
-            {
-                FileSize = fileModelSize,
-                TimeAwait = timeAwait
-            };
-        }
+			{
+				DownloadingProcess(file, streamTCPWriter);
+			}
+			var fileModelSize = fileModel.Size;
+			fileModel = null;
+			file.Close();
+			return new ActionResult()
+			{
+				FileSize = fileModelSize,
+				TimeAwait = timeAwait
+			};
+		}
 
-        private long ContinueDownloading(FileStream file)
+		private long CheckFileAndFileParameters(string[] parameters, long timeAwait, FileStream file)
+		{
+			if (fileModel == null || ipClient != endPoint || file.Name != fileModel.FileName)
+			{
+				fileModel = new FileModel()
+				{
+					FileName = file.Name,
+					Size = long.Parse(parameters[0])
+				};
+			}
+			if (file.Length > 0 && file.Length < fileModel.Size)
+			{
+				timeAwait = ContinueDownloading(file);
+				if (timeAwait == 0)
+				{
+					socket.Send((new byte[4096]).InsertInStartArray(Encoding.ASCII.GetBytes($"break|")));
+					file.Close();
+					return -1;
+				}
+				fileModel.Packets.Add(new PacketModel()
+				{
+					Size = file.Length,
+					IsCame = true,
+					Number = 0
+				});
+			}
+
+			return timeAwait;
+		}
+
+		private long ContinueDownloading(FileStream file)
         {
             long timeAwait;
             Console.WriteLine("File exist in current download directory.\n" +
@@ -114,14 +122,20 @@ namespace ClientSocket.Services
             return timeAwait;
         }
 
-		private bool DownloadingProcess(FileStream file)
+		private bool DownloadingProcess(FileStream file, PacketWriter streamTCPWriter)
 		{
-			var data = new byte[4096];
-
-			var received = socket.Receive(data);
-			if (received <= 0)
+			var camingBytes = 0;
+			while (camingBytes < 4096)
 			{
-				return false;
+				var tempdata = new byte[4096];
+				var tempCamingBytes = socket.Receive(tempdata);
+				camingBytes += tempCamingBytes;
+				streamTCPWriter.Write(tempdata.SubArray(0, tempCamingBytes));
+			}
+			var data = streamTCPWriter.ToByteArray();
+			if (data.Length > 4096)
+			{
+				streamTCPWriter.Write(data.SubArray(4096, data.Length - 4096));
 			}
 			long packetNumber, filePosition;
 			byte[] writedData;
@@ -131,16 +145,10 @@ namespace ClientSocket.Services
 				filePosition = stream.ReadInt64();
 				writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
 			}
-			if(packetNumber != (fileModel.Packets.Count))
-			{
-				socket.Send(Encoding.ASCII.GetBytes($"error|"));
-				return false;
-			}
 			if (fileModel.Size - file.Length < writedData.Length)
 			{
 				writedData = writedData.SubArray(0, fileModel.Size - file.Length);
 			}
-			Console.WriteLine($"  {packetNumber} ===> {filePosition}");
 			file.Seek(filePosition, SeekOrigin.Begin);
 			file.Write(writedData, 0, writedData.Length);
 			fileModel.Packets.Add(new PacketModel()

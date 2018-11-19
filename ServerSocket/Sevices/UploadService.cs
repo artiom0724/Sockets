@@ -50,60 +50,22 @@ namespace ServerSocket.Sevices
             FileModel model;
             var notSameClient = ipClient?.ToString().Split(":").First() != savedClient?.ToString().Split(":").First();
             try
-            {
-                if (notSameClient)
-                {
-                    fileModels.Clear();
-                }
-                if(!fileModels.Where(m=>m.FileName==command.Parameters.First()).Any())
-                {
-                    model = new FileModel()
-                    {
-                        FileName = command.Parameters.First(),
-                        Size = long.Parse(command.Parameters.Last())
-                    };
-                    fileModels.Add(model);
-                    File.Delete(command.Parameters.First());
-                }
-                file = File.OpenWrite(command.Parameters.First());
-                model = fileModels.Where(m=>m.FileName == command.Parameters.First()).First();
-                var data = new byte[4096];
-                if (file.Length > 0)
-                {
-                    socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
-                    socket.Receive(data);
-                    if (Encoding.ASCII.GetString(data).Split("|").First().Contains("continue"))
-                    {
-                        file.Seek(file.Length, SeekOrigin.Begin);
-                        model.Packets.Clear();
-                        model.Packets.Add(new PacketModel()
-                        {
-                            Number = 0,
-                            Size = file.Length,
-                            IsCame = true
-                        });
-                    }
-                    else
-                    {
-                        var tempFileName = file.Name;
-                        file.Close();
-                        File.Delete(tempFileName);
-                        file = File.OpenWrite(command.Parameters.First());
-                    }
-                }
-                else
-                {
-                    socket.Send(Encoding.ASCII.GetBytes("0|"));
-                }
+			{
+				if (notSameClient)
+				{
+					fileModels.Clear();
+				}
+				CheckFileAndFileParameters(command, out file, out model);
+				var streamTCPWriter = new PacketWriter();
 
-                while (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) < model.Size)
-                {
-                    GettingProcess(file);
-                }
-                fileModels.RemoveAll(x => x.FileName == model.FileName);
-                file.Close();
-            }
-            catch (Exception exc)
+				while (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) < model.Size)
+				{
+					GettingProcess(file, streamTCPWriter);
+				}
+				fileModels.RemoveAll(x => x.FileName == model.FileName);
+				file.Close();
+			}
+			catch (Exception exc)
             {
                 if (file != null)
                 {
@@ -114,23 +76,89 @@ namespace ServerSocket.Sevices
             }
         }
 
-        private bool GettingProcess(FileStream file)
+		private void CheckFileAndFileParameters(ServerCommand command, out FileStream file, out FileModel model)
+		{
+			if (!fileModels.Where(m => m.FileName == command.Parameters.First()).Any())
+			{
+				model = new FileModel()
+				{
+					FileName = command.Parameters.First(),
+					Size = long.Parse(command.Parameters.Last())
+				};
+				fileModels.Add(model);
+				File.Delete(command.Parameters.First());
+			}
+			file = File.OpenWrite(command.Parameters.First());
+			model = fileModels.Where(m => m.FileName == command.Parameters.First()).First();
+			var data = new byte[4096];
+			if (file.Length > 0)
+			{
+				socket.Send((new byte[4096]).InsertInStartArray(Encoding.ASCII.GetBytes($"{file.Length}|")));
+				var camingBytes = 0;
+				using (var stream = new PacketWriter())
+				{
+					while (camingBytes < 4096)
+					{
+						var tempCamingBytes = socket.Receive(data);
+						camingBytes += tempCamingBytes;
+						stream.Write(data.SubArray(0, tempCamingBytes));
+					}
+				}
+				file = CheckFileSize(command, file, model, data);
+			}
+			else
+			{
+				socket.Send((new byte[4096]).InsertInStartArray(Encoding.ASCII.GetBytes("0|")));
+			}
+		}
+
+		private static FileStream CheckFileSize(ServerCommand command, FileStream file, FileModel model, byte[] data)
+		{
+			if (Encoding.ASCII.GetString(data).Split("|").First().Contains("continue"))
+			{
+				file.Seek(file.Length, SeekOrigin.Begin);
+				model.Packets.Clear();
+				model.Packets.Add(new PacketModel()
+				{
+					Number = 0,
+					Size = file.Length,
+					IsCame = true
+				});
+			}
+			else
+			{
+				var tempFileName = file.Name;
+				file.Close();
+				File.Delete(tempFileName);
+				file = File.OpenWrite(command.Parameters.First());
+			}
+
+			return file;
+		}
+
+		private bool GettingProcess(FileStream file, PacketWriter streamTCPWriter)
         {
-            var data = new byte[4096];
-            socket.Receive(data);
-            var model = fileModels.Where(m=>m.FileName == Path.GetFileName(file.Name)).First();
+			var camingBytes = 0;
+			while (camingBytes < 4096)
+			{
+				var tempdata = new byte[4096];
+				var tempcamingBytes = socket.Receive(tempdata);
+				camingBytes += tempcamingBytes;
+				streamTCPWriter.Write(tempdata.SubArray(0, tempcamingBytes));
+			}
+			var data = streamTCPWriter.ToByteArray();
+			if(data.Length > 4096)
+			{
+				streamTCPWriter.Write(data.SubArray(4096, data.Length - 4096));
+			}
+			var model = fileModels.Where(m=>m.FileName == Path.GetFileName(file.Name)).First();
             long packetNumber, filePosition;
             byte[] writedData;
-            using (var stream = new PacketReader(data))
-            {
-                packetNumber = stream.ReadInt64();
-                filePosition = stream.ReadInt64();
-                writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
-            }
-			if(packetNumber != model.Packets.Count)
+			using (var stream = new PacketReader(data))
 			{
-				socket.Send(Encoding.ASCII.GetBytes($"error|"));
-				return false;
+				packetNumber = stream.ReadInt64();
+				filePosition = stream.ReadInt64();
+				writedData = stream.ReadBytes(data.Length - 2 * sizeof(long));
 			}
             if (model.Size - file.Length < writedData.Length)
             {
@@ -145,7 +173,6 @@ namespace ServerSocket.Sevices
                 Number = packetNumber
             });
             Console.Write("\rGetting... " + (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / model.Size) + "%");
-			socket.Send(Encoding.ASCII.GetBytes("next|"));
 			return true;
         }
 
