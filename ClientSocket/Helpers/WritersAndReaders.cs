@@ -26,5 +26,10 @@ namespace ClientSocket.Helpers
         {
             return memoryStream.ToArray();
         }
+
+		public void Clear()
+		{
+			memoryStream.SetLength(0);
+		}
     }
 }

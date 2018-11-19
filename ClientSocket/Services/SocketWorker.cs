@@ -90,13 +90,15 @@ namespace ClientSocket.Services
 				{
 					do
 					{
-						receivedBytes += socket.Receive(data);
-						stream.Write(data.SubArray(0, receivedBytes));
+						var tempReceivedBytes = socket.Receive(data);
+						receivedBytes += tempReceivedBytes;
+						stream.Write(data.SubArray(0, tempReceivedBytes));
 					} while (receivedBytes < 4096);
 					data = stream.ToByteArray();
 				}
 				var incomingString = Encoding.ASCII.GetString(data);
 				var parameters = incomingString.Split('|');
+				return parameters;
 			}
             return new string[1];
         }

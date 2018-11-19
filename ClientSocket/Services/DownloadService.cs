@@ -125,18 +125,20 @@ namespace ClientSocket.Services
 		private bool DownloadingProcess(FileStream file, PacketWriter streamTCPWriter)
 		{
 			var camingBytes = 0;
-			while (camingBytes < 4096)
+			while (streamTCPWriter.ToByteArray().Length < 4096)
 			{
 				var tempdata = new byte[4096];
 				var tempCamingBytes = socket.Receive(tempdata);
 				camingBytes += tempCamingBytes;
 				streamTCPWriter.Write(tempdata.SubArray(0, tempCamingBytes));
 			}
-			var data = streamTCPWriter.ToByteArray();
-			if (data.Length > 4096)
+			var tempData = streamTCPWriter.ToByteArray();
+			streamTCPWriter.Clear();
+			if (tempData.Length > 4096)
 			{
-				streamTCPWriter.Write(data.SubArray(4096, data.Length - 4096));
+				streamTCPWriter.Write(tempData.SubArray(4096, tempData.Length - 4096));
 			}
+			var data = tempData.SubArray(0, 4096);
 			long packetNumber, filePosition;
 			byte[] writedData;
 			using (var stream = new PacketReader(data))

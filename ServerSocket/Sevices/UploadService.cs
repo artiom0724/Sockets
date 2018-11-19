@@ -60,7 +60,7 @@ namespace ServerSocket.Sevices
 
 				while (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) < model.Size)
 				{
-					GettingProcess(file, streamTCPWriter);
+					GettingProcess(file, streamTCPWriter, model);
 				}
 				fileModels.RemoveAll(x => x.FileName == model.FileName);
 				file.Close();
@@ -136,22 +136,23 @@ namespace ServerSocket.Sevices
 			return file;
 		}
 
-		private bool GettingProcess(FileStream file, PacketWriter streamTCPWriter)
+		private bool GettingProcess(FileStream file, PacketWriter streamTCPWriter, FileModel model)
         {
 			var camingBytes = 0;
-			while (camingBytes < 4096)
+			while (streamTCPWriter.ToByteArray().Length < 4096)
 			{
 				var tempdata = new byte[4096];
-				var tempcamingBytes = socket.Receive(tempdata);
-				camingBytes += tempcamingBytes;
-				streamTCPWriter.Write(tempdata.SubArray(0, tempcamingBytes));
+				var tempCamingBytes = socket.Receive(tempdata);
+				camingBytes += tempCamingBytes;
+				streamTCPWriter.Write(tempdata.SubArray(0, tempCamingBytes));
 			}
-			var data = streamTCPWriter.ToByteArray();
-			if(data.Length > 4096)
+			var tempData = streamTCPWriter.ToByteArray();
+			streamTCPWriter.Clear();
+			if (tempData.Length > 4096)
 			{
-				streamTCPWriter.Write(data.SubArray(4096, data.Length - 4096));
+				streamTCPWriter.Write(tempData.SubArray(4096, tempData.Length - 4096));
 			}
-			var model = fileModels.Where(m=>m.FileName == Path.GetFileName(file.Name)).First();
+			var data = tempData.SubArray(0, 4096);
             long packetNumber, filePosition;
             byte[] writedData;
 			using (var stream = new PacketReader(data))
