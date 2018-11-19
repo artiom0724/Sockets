@@ -82,9 +82,13 @@ namespace ServerSocket.Helpers
                 Socket handler = socket.Accept();
                 if (handler.Connected)
                 {
-                    ConnectUdpSockets(handler);
+					Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
+					ConnectUdpSockets(handler);
                 }
-                Console.WriteLine ($"Connected client with address {handler.RemoteEndPoint.ToString()}");
+				else if(socketUDPWrite != null && socketUDPRead != null)
+				{
+					DissconnectSockets();
+				}
                 while (handler.Connected)
                 {
                     StringBuilder builder = new StringBuilder();
@@ -121,6 +125,15 @@ namespace ServerSocket.Helpers
             socketUDPWrite = CreateSocket(ProtocolType.Udp);
             socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
         }
+		private void DissconnectSockets()
+		{
+			socketUDPWrite.Shutdown(SocketShutdown.Both);
+			socketUDPRead.Shutdown(SocketShutdown.Both);
+			socketUDPWrite.Close();
+			socketUDPRead.Close();
+			socketUDPWrite = null;
+			socketUDPRead = null;
+		}
 
         private Socket CreateSocket(ProtocolType type, EndPoint endPoint = null)
         {
