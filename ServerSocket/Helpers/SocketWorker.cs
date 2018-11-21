@@ -50,12 +50,14 @@ namespace ServerSocket.Helpers
             }
             if (socketUDPWrite != null)
             {
-                socketUDPWrite.Close();
+				socketUDPWrite.Shutdown(SocketShutdown.Both);
+			    socketUDPWrite.Close();
                 socketUDPWrite = null;
             }
-            if (socketUDPWrite != null)
+            if (socketUDPRead != null)
             {
-                socketUDPRead.Close();
+				socketUDPRead.Shutdown(SocketShutdown.Both);
+				socketUDPRead.Close();
                 socketUDPRead = null;
             }
         }
@@ -83,6 +85,7 @@ namespace ServerSocket.Helpers
                 if (handler.Connected)
                 {
 					Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
+					handler.ReceiveTimeout = 20000;
 					ConnectUdpSockets(handler);
                 }
 				else if(socketUDPWrite != null && socketUDPRead != null)
@@ -97,11 +100,14 @@ namespace ServerSocket.Helpers
 
                     do
                     {
-                        if(handler.Poll(20000, SelectMode.SelectError))
-                        {
-                            throw new SocketException((int)SocketError.ConnectionReset);
-                        }
-                        bytes = handler.Receive(socketData);
+						try
+						{
+							bytes = handler.Receive(socketData);
+						}catch(Exception exc)
+						{
+							handler.Close();
+							throw;
+						}
                         builder.Append(Encoding.ASCII.GetString(socketData, 0, bytes));
                         if (builder.ToString().Contains("\r\n"))
                             break;
@@ -122,7 +128,7 @@ namespace ServerSocket.Helpers
         {
             endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.LocalEndPoint)).Port + 1));
             endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(handler.RemoteEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 2));
-            socketUDPWrite = CreateSocket(ProtocolType.Udp);
+			socketUDPWrite = CreateSocket(ProtocolType.Udp);
             socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
         }
 		private void DissconnectSockets()
