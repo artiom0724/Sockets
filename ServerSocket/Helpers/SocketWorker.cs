@@ -43,9 +43,9 @@ namespace ServerSocket.Helpers
 
         private void ExceptionCloseSockets()
         {
-            if (socket != null)
+			if (socket != null)
             {
-                socket.Close();
+				socket.Close();
                 socket = null;
             }
             if (socketUDPWrite != null)

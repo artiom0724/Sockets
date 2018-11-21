@@ -26,7 +26,7 @@ namespace ServerSocket.Helpers
                 case "time":
                     resCommand.Type = CommandType.Time;
                     return resCommand;
-                case "close":
+                case "close\r\n":
                     resCommand.Type = CommandType.Close;
                     return resCommand;
                 case "client_download":

@@ -14,13 +14,19 @@ namespace ServerSocket.Sevices
             socket.Send(data);
         }
 
-        public void CloseHandler(Socket socket)
+        public void CloseHandler(Socket socket, Socket socketUDPWrite, Socket socketUDPRead)
         {
-            var data = Encoding.ASCII.GetBytes("Connection closed.\r\n");
-            socket.Send(data);
-            socket.Shutdown(SocketShutdown.Both);
-            socket.Close();
-        }
+			socket.Shutdown(SocketShutdown.Both);
+			socketUDPWrite.Shutdown(SocketShutdown.Both);
+			socketUDPRead.Shutdown(SocketShutdown.Both);
+			socket.Close();
+			socketUDPWrite.Close();
+			socketUDPRead.Close();
+			socket = null;
+			socketUDPWrite = null;
+			socketUDPRead = null;
+			Console.WriteLine("Disconnect");
+		}
 
         public void TimeHandler(Socket socket)
         {

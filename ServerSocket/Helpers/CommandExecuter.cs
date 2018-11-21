@@ -29,7 +29,7 @@ namespace ServerSocket.Helpers
                     baseCommandService.TimeHandler(socket);
                     return;
                 case CommandType.Close:
-                    baseCommandService.CloseHandler(socket);
+                    baseCommandService.CloseHandler(socket, socketUDPRead, socketUDPWrite);
                     return;
                 case CommandType.Download:
                     downloadService.DownloadFile(socket, endPoint.EndPoint, socketUDPWrite, command, ProtocolType.Tcp);

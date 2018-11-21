@@ -42,16 +42,15 @@ namespace ClientSocket.Services
 
         public void DisconnectSocket()
         {
-            socket.Shutdown(SocketShutdown.Both);
+			socket.Send(Encoding.ASCII.GetBytes("close\r\n"));
             socketUDPWrite.Shutdown(SocketShutdown.Both);
             socketUDPRead.Shutdown(SocketShutdown.Both);
-            socket.Close();
             socketUDPWrite.Close();
             socketUDPRead.Close();
-            socket = null;
             socketUDPWrite = null;
             socketUDPRead = null;
-        }
+			socket = null;
+		}
 
         public ActionResult DownloadFile(string fileName, ProtocolType type)
         {
