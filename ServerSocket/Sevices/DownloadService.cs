@@ -130,7 +130,7 @@ namespace ServerSocket.Sevices
                     Size = file.Length
                 };
                 long packetNumber = 0, partCamingPackets = 0;
-                socket.Send(Encoding.ASCII.GetBytes($"{file.Length}|"));
+                socket.Send(new byte[4096].InsertInStartArray(Encoding.ASCII.GetBytes($"{file.Length}|")));
                 while (file.Length > fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size))
                 {
                     while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partCamingPackets < 16)
@@ -148,7 +148,7 @@ namespace ServerSocket.Sevices
             }
             catch (FileNotFoundException ex)
             {
-                var response = Encoding.ASCII.GetBytes($"Error|");
+                var response = new byte[4096].InsertInStartArray(Encoding.ASCII.GetBytes($"Error|"));
                 socket.Send(response);
                 Console.WriteLine(ex);
             }
