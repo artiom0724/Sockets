@@ -85,7 +85,7 @@ namespace ServerSocket.Helpers
                 if (handler.Connected)
                 {
 					Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
-					handler.ReceiveTimeout = 20000;
+					handler.ReceiveTimeout = 60000;
 					ConnectUdpSockets(handler);
                 }
 				else if(socketUDPWrite != null && socketUDPRead != null)

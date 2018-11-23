@@ -23,7 +23,7 @@ namespace ServerSocket.Helpers
                     resCommand.Parameters.Clear();
                     resCommand.Parameters.Add(rest);
                     return resCommand;
-                case "time":
+                case "time\r\n":
                     resCommand.Type = CommandType.Time;
                     return resCommand;
                 case "close\r\n":
