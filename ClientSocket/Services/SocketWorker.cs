@@ -79,7 +79,9 @@ namespace ClientSocket.Services
 
         private string[] GetParameters(string command, ProtocolType type = ProtocolType.Tcp)
         {
-            socket.Send(Encoding.ASCII.GetBytes(command));
+			socket.ReceiveTimeout = 20000;
+
+			socket.Send(Encoding.ASCII.GetBytes(command));
             var data = new byte[4096];
 
             if (type == ProtocolType.Tcp)
