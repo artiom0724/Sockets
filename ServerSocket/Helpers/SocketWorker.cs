@@ -31,8 +31,8 @@ namespace ServerSocket.Helpers
                 try
                 {
                     OpenSockets();
-                    MonitorPort();
-					//MonitorPortThreads();
+                    //MonitorPort();
+					MonitorPortThreads();
 					CloseSockets();
                     Console.WriteLine("\nDisconnect");
                 }
@@ -230,7 +230,7 @@ namespace ServerSocket.Helpers
 					var commandString = builder.ToString();
 
 					threadCommandExecuter.ExecuteCommand(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketUDPRead, threadTripleEndPointModel);
-					if (!handler.Connected)
+					if (!threadHandler.Connected)
 					{
 						return;
 					}
@@ -242,10 +242,10 @@ namespace ServerSocket.Helpers
 		{
 			if (threadHandler.Connected)
 			{
-				UpdateUdpWriteSocket();
+				UpdateUdpWriteSocket(threadHandler);
 				if (socketUDPRead == null)
 				{
-					ConnectUdpSockets();
+					ConnectUdpSockets(threadHandler);
 				}
 
 				if (!sockets.Select(x => x.handler.RemoteEndPoint).Contains(threadHandler.RemoteEndPoint))
@@ -284,15 +284,17 @@ namespace ServerSocket.Helpers
 			}
 		}
 
-		private void UpdateUdpWriteSocket()
+		private void UpdateUdpWriteSocket(Socket _handler = null)
 		{
-			endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(handler.RemoteEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 2));
+			_handler = _handler ?? handler;
+			endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(_handler.RemoteEndPoint)).Address, (((IPEndPoint)(_handler.RemoteEndPoint)).Port + 2));
 			socketUDPWrite = CreateSocket(ProtocolType.Udp);
 		}
 
-		private void ConnectUdpSockets()
+		private void ConnectUdpSockets(Socket _handler = null)
         {
-			endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.LocalEndPoint)).Port + 1));
+			_handler = _handler ?? handler;
+			endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(_handler.LocalEndPoint)).Address, (((IPEndPoint)(_handler.LocalEndPoint)).Port + 1));
 			socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
 		}
 		private void DissconnectSockets()

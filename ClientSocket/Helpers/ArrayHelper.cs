@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
+using static System.Linq.Enumerable;
 
 namespace ClientSocket.Helpers
 {
@@ -62,5 +64,9 @@ namespace ClientSocket.Helpers
 		{
 			Directory.CreateDirectory(folderName);
 		}
+
+		public static IPAddress GetBroadcastAddress(this IPAddress address, IPAddress subnetMask) => new IPAddress(
+			Range(0, address.GetAddressBytes().Length).Select(i =>
+				(byte)(address.GetAddressBytes()[i] | (subnetMask.GetAddressBytes()[i] ^ 255))).ToArray());
 	}
 }
