@@ -1,5 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ClientSocket.Helpers
 {
@@ -38,5 +41,26 @@ namespace ClientSocket.Helpers
             stream.Position = 0;
             return stream;
         }
-    }
+
+		public static byte[] StringToByteArray(this string str) => Encoding.ASCII.GetBytes(str);
+
+		public static string ByteArrayToString(this byte[] bytes) => Encoding.ASCII.GetString(bytes, 0, bytes.Length);
+
+		public static void OpenFile(string filePath)
+		{
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			{
+				Process.Start(new ProcessStartInfo("cmd", $"/c {filePath}"));
+			}
+			else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			{
+				Process.Start("gedit", filePath);
+			}
+		}
+
+		public static void CheckFolder(string folderName)
+		{
+			Directory.CreateDirectory(folderName);
+		}
+	}
 }

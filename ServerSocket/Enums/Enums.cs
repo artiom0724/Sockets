@@ -15,7 +15,9 @@ namespace ServerSocket.Enums
             Unknown,
             Upload,
             DownloadUDP,
-            UploadUDP
-        }
+            UploadUDP,
+			Ping,
+			Tracert
+		}
     }
 }

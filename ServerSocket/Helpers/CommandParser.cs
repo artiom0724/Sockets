@@ -41,6 +41,12 @@ namespace ServerSocket.Helpers
                 case "client_upload_udp":
                     resCommand.Type = CommandType.UploadUDP;
                     return resCommand;
+				case "ping":
+					resCommand.Type = CommandType.Ping;
+					return resCommand;
+				case "tracert":
+					resCommand.Type = CommandType.Tracert;
+					return resCommand;
                 default:
                     resCommand.Type = CommandType.Unknown;
                     return resCommand;
