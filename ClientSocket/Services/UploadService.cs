@@ -135,8 +135,14 @@ namespace ClientSocket.Services
                 {
                     while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partNumber < 16)
                     {
-                        packetNumber = FirstSending(file, fileModel, packetNumber);
-                        partNumber++;
+						try
+						{
+							packetNumber = FirstSending(file, fileModel, packetNumber);
+							partNumber++;
+						}catch(Exception ec)
+						{
+							Console.WriteLine(ec.Message + "\n" + ec.StackTrace);
+						}
                     }
                     while (fileModel.Packets.Any(x => !x.IsCame) 
                         && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)

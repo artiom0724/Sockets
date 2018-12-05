@@ -204,8 +204,7 @@ namespace ServerSocket.Helpers
 				EndPointUDPRead = endPointModel.EndPointUDPRead,
 				EndPointUDPWrite = socketsModel.endPointUDP
 			};
-			threadHandler.ReceiveTimeout = 10000;
-			
+
 			while (true)
 			{
 				while (threadHandler.Connected)
