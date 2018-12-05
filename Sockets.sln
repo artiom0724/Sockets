@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerSocket", "ServerSocke
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PingSocket", "PingSocket\PingSocket.csproj", "{25E91E10-0ED1-4C81-B228-E9178C0854FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatSockets", "ChatSockets\ChatSockets.csproj", "{E52444B5-90E2-4148-BEC7-369F4999DB88}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatSockets", "ChatSockets\ChatSockets.csproj", "{E52444B5-90E2-4148-BEC7-369F4999DB88}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MPICalculator", "ConsoleApp1\MPICalculator.csproj", "{1AAE4293-1C20-4204-BB8C-14A294802141}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{E52444B5-90E2-4148-BEC7-369F4999DB88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E52444B5-90E2-4148-BEC7-369F4999DB88}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E52444B5-90E2-4148-BEC7-369F4999DB88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AAE4293-1C20-4204-BB8C-14A294802141}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AAE4293-1C20-4204-BB8C-14A294802141}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AAE4293-1C20-4204-BB8C-14A294802141}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AAE4293-1C20-4204-BB8C-14A294802141}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

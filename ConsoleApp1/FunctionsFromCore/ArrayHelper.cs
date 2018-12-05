@@ -1,0 +1,60 @@
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Runtime.InteropServices;
+using System.Text;
+using static System.Linq.Enumerable;
+
+namespace ClientSocket.Helpers
+{
+    static public class ArrayHelper
+    {
+        public static T[] SubArray<T>(this T[] data, int index, long length)
+        {
+            T[] result = new T[length];
+            Array.Copy(data, index, result, 0, length);
+            return result;
+        }
+
+        public static T[] InsertInStartArray<T>(this T[] data, T[] inserting)
+        {
+            for(int i = 0; i < inserting.Length; i++)
+            {
+                data[i] = inserting[i];
+            }
+            return data;
+        }
+
+        public static T[] InsertInArray<T>(this T[] data, int startPosition, T[] inserting)
+        {
+            for (int i = 0; i < inserting.Length; i++)
+            {
+                data[startPosition + i] = inserting[i];
+            }
+            return data;
+        }
+
+        public static Stream AddToStream<T>(this Stream stream, T s)
+        {
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
+        }
+
+		public static byte[] StringToByteArray(this string str) => Encoding.ASCII.GetBytes(str);
+
+		public static string ByteArrayToString(this byte[] bytes) => Encoding.ASCII.GetString(bytes, 0, bytes.Length);
+
+		public static void CheckFolder(string folderName)
+		{
+			Directory.CreateDirectory(folderName);
+		}
+
+		public static IPAddress GetBroadcastAddress(this IPAddress address, IPAddress subnetMask) => new IPAddress(
+			Range(0, address.GetAddressBytes().Length).Select(i =>
+				(byte)(address.GetAddressBytes()[i] | (subnetMask.GetAddressBytes()[i] ^ 255))).ToArray());
+	}
+}
