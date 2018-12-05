@@ -42,24 +42,21 @@ namespace PingSocket.Services
 			{
 				var buffer = new StringBuilder();
 				var reply = replies.First();
-
-				buffer.AppendLine("--------------------------------------------------");
 				buffer.AppendLine($"Ping statistics for {host} " +
 								  $"{(host == reply.Address.ToString() ? string.Empty : $"[{reply.Address}]")}:");
-				buffer.AppendLine("\tPackets:");
-				buffer.AppendLine($"\t\tsent = {replies.Count},");
-				buffer.AppendLine($"\t\treceived = {replies.Count(r => r.Status == IPStatus.Success)},");
-				buffer.AppendLine($"\t\tlost = {replies.Count(r => r.Status != IPStatus.Success)}.");
+				buffer.AppendLine("Packets:");
+				buffer.AppendLine($"\tsent = {replies.Count},");
+				buffer.AppendLine($"\treceived = {replies.Count(r => r.Status == IPStatus.Success)},");
+				buffer.AppendLine($"\tlost = {replies.Count(r => r.Status != IPStatus.Success)}.");
 				if (replies.Count(r => r.Status == IPStatus.Success) != 0)
 				{
 					var times = replies.Select(r => r.ElapsedTime).ToList();
 
 					buffer.AppendLine("\tEstimated time of reception and transmission:");
-					buffer.AppendLine($"\t\tmin = {times.Min()} ms,");
-					buffer.AppendLine($"\t\tmax = {times.Max()} ms,");
-					buffer.AppendLine($"\t\taverage = {(int)times.Average()} ms.");
+					buffer.AppendLine($"\tmin = {times.Min()} ms,");
+					buffer.AppendLine($"\tmax = {times.Max()} ms,");
+					buffer.AppendLine($"\taverage = {(int)times.Average()} ms.");
 				}
-				buffer.AppendLine("--------------------------------------------------");
 
 				file.Write(buffer.ToString().StringToByteArray(), 0, buffer.Length);
 			}

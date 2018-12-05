@@ -23,7 +23,9 @@ namespace ServerSocket.Helpers
 
         private TripleEndPointModel endPointModel;
 
-        public void AwaitCommand(object data)
+		private int portCount = 3;
+
+		public void AwaitCommand(object data)
         {
             endPointModel = (TripleEndPointModel)data;
             while (true)
@@ -150,6 +152,7 @@ namespace ServerSocket.Helpers
 							bytes = tempSocket.handler.Receive(socketData);
 							handler = tempSocket.handler;
 							socketUDPWrite = tempSocket.socketUDP;
+							socketUDPRead = tempSocket.socketUDPRead;
 							endPointModel.EndPointUDPWrite = tempSocket.endPointUDP;
 							break;
 						}
@@ -229,7 +232,7 @@ namespace ServerSocket.Helpers
 					}while (threadHandler.Connected && !builder.ToString().Contains("\r\n"));
 					var commandString = builder.ToString();
 
-					threadCommandExecuter.ExecuteCommand(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketUDPRead, threadTripleEndPointModel);
+					threadCommandExecuter.ExecuteCommand(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketsModel.socketUDPRead, threadTripleEndPointModel);
 					if (!threadHandler.Connected)
 					{
 						return;
@@ -243,10 +246,7 @@ namespace ServerSocket.Helpers
 			if (threadHandler.Connected)
 			{
 				UpdateUdpWriteSocket(threadHandler);
-				if (socketUDPRead == null)
-				{
-					ConnectUdpSockets(threadHandler);
-				}
+				ConnectUdpSockets(threadHandler);
 
 				if (!sockets.Select(x => x.handler.RemoteEndPoint).Contains(threadHandler.RemoteEndPoint))
 				{
@@ -254,7 +254,8 @@ namespace ServerSocket.Helpers
 					{
 						handler = threadHandler,
 						socketUDP = socketUDPWrite,
-						endPointUDP = endPointModel.EndPointUDPWrite
+						endPointUDP = endPointModel.EndPointUDPWrite,
+						socketUDPRead = socketUDPRead
 					});
 				}
 				Console.WriteLine($"Connected client with address {threadHandler.RemoteEndPoint.ToString()}");
@@ -266,10 +267,7 @@ namespace ServerSocket.Helpers
 			if (handler.Connected)
 			{
 				UpdateUdpWriteSocket();
-				if (socketUDPRead == null)
-				{
-					ConnectUdpSockets();
-				}
+				ConnectUdpSockets();
 
 				if (!sockets.Select(x => x.handler.RemoteEndPoint).Contains(handler.RemoteEndPoint))
 				{
@@ -277,7 +275,8 @@ namespace ServerSocket.Helpers
 					{
 						handler = handler,
 						socketUDP = socketUDPWrite,
-						endPointUDP = endPointModel.EndPointUDPWrite
+						endPointUDP = endPointModel.EndPointUDPWrite,
+						socketUDPRead = socketUDPRead
 					});
 				}
 				Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
@@ -294,7 +293,7 @@ namespace ServerSocket.Helpers
 		private void ConnectUdpSockets(Socket _handler = null)
         {
 			_handler = _handler ?? handler;
-			endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(_handler.LocalEndPoint)).Address, (((IPEndPoint)(_handler.LocalEndPoint)).Port + 1));
+			endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(_handler.LocalEndPoint)).Address, (((IPEndPoint)(_handler.RemoteEndPoint)).Port + 1));
 			socketUDPRead = CreateSocket(ProtocolType.Udp, endPointModel.EndPointUDPRead);
 		}
 		private void DissconnectSockets()
