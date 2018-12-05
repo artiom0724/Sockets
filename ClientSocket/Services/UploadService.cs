@@ -116,61 +116,62 @@ namespace ClientSocket.Services
             return isContinue ? timeAwait : 0;
         }
 
-        private ActionResult UploadFileUDP(string fileName)
-        {
-            FileStream file = null;
-            try
-            {
-                file = File.OpenRead(fileName);
+		private ActionResult UploadFileUDP(string fileName)
+		{
+			FileStream file = null;
+			try
+			{
+				file = File.OpenRead(fileName);
 
-                var fileModel = new FileModel()
-                {
-                    FileName = file.Name,
-                    Size = file.Length
-                };
-                long packetNumber = 0;
+				var fileModel = new FileModel()
+				{
+					FileName = file.Name,
+					Size = file.Length
+				};
+				long packetNumber = 0;
 
-                long partNumber = 0;
-                while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)
-                {
-                    while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partNumber < 16)
-                    {
-						try
-						{
-							packetNumber = FirstSending(file, fileModel, packetNumber);
-							partNumber++;
-						}catch(Exception ec)
-						{
-							Console.WriteLine(ec.Message + "\n" + ec.StackTrace);
-						}
-                    }
-                    while (fileModel.Packets.Any(x => !x.IsCame) 
-                        && fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)
-                    {
-                        ResendingMissingPackets(file, fileModel);
-                    }
-                    partNumber = 0;
-                }
-                var fileLength = file.Length;
-                file.Close();
+				long partNumber = 0;
+				while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)
+				{
+					while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partNumber < 16)
+					{
 
-                return new ActionResult()
-                {
-                    FileSize = fileLength,
-                    TimeAwait = 0
-                };
-            }
-            catch (FileNotFoundException ex)
-            {
-                Console.WriteLine(ex.Message);
-                return new ActionResult();
-            }
-            catch (SocketException ex)
-            {
-                file.Close();
-                throw ex;
-            }
-        }
+						packetNumber = FirstSending(file, fileModel, packetNumber);
+						partNumber++;
+
+					}
+					while (fileModel.Packets.Any(x => !x.IsCame)
+						&& fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)
+					{
+						ResendingMissingPackets(file, fileModel);
+					}
+					partNumber = 0;
+				}
+				var fileLength = file.Length;
+				file.Close();
+
+				return new ActionResult()
+				{
+					FileSize = fileLength,
+					TimeAwait = 0
+				};
+			}
+			catch (FileNotFoundException ex)
+			{
+				Console.WriteLine(ex.Message);
+				return new ActionResult();
+			}
+			catch (SocketException ex)
+			{
+				file.Close();
+				throw ex;
+			}
+			catch (Exception exc)
+			{
+				Console.WriteLine(exc.Message + "\n" + exc.StackTrace);
+				throw exc;
+			}
+		}
 
         private void ResendingMissingPackets(FileStream file, FileModel fileModel)
         {
