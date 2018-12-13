@@ -25,7 +25,7 @@ namespace ServerSocket.Sevices
             private List<FileModel> fileModels = new List<FileModel>();
             private FileModel udpModel;
 
-        public void UploadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type)
+        public void UploadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type, bool completeCommand = false)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
@@ -40,11 +40,59 @@ namespace ServerSocket.Sevices
                     UploadFileUDP(command);
                     break;
             }
+			
 			udpModel = null;
 			savedClient = socket.RemoteEndPoint;
         }
 
-        private void UploadFileTCP(ServerCommand command)
+		public bool ContinueExecute(Socket _socket, EndPoint _endPoint, Socket _socketUDP, ServerCommand command, ProtocolType type)
+		{
+			this.socket = _socket;
+			this.socketUDP = _socketUDP;
+			this.ipClient = _socket.RemoteEndPoint;
+			this.endPoint = _endPoint;
+			switch (type)
+			{
+				case ProtocolType.Tcp:
+					UploadFileTCP(command);
+					break;
+				case ProtocolType.Udp:
+					return UploadFileUDPContinue(command);
+			}
+			
+			udpModel = null;
+			savedClient = socket.RemoteEndPoint;
+			return true;
+		}
+
+		private bool UploadFileUDPContinue(ServerCommand command)
+		{
+			FileStream file = null;
+			udpModel = fileModels.FirstOrDefault(x=>x.socket == socket);
+			if (udpModel == null)
+			{
+				file = File.OpenWrite(command.Parameters.First());
+				udpModel = new FileModel()
+				{
+					FileName = file.Name,
+					Size = long.Parse(command.Parameters[1])
+				};
+				fileModels.Add(udpModel);
+				if (file.Length > 0)
+				{
+					var fileName = file.Name;
+					file.Close();
+					File.Delete(fileName);
+					file = File.OpenWrite(fileName);
+				}
+				return false;
+			}
+			file = File.OpenWrite(command.Parameters.First());
+			FirstDataGetting(file);
+			return (file.Length == udpModel.Size);
+		}
+
+		private void UploadFileTCP(ServerCommand command)
         {
             FileStream file = null;
             FileModel model;

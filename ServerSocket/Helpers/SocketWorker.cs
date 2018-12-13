@@ -144,27 +144,31 @@ namespace ServerSocket.Helpers
 
 				do
 				{
-					for (var i = 0; i < sockets.Count; i++)
+					var notExecuting = sockets.Where(x => !x.ExecucuteCommand).ToList();
+					for (var i = 0; i < notExecuting.Count; i++)
 					{
-						var tempSocket = sockets.ElementAt(i);
-						try
+						var tempSocket = notExecuting.ElementAt(i);
+						if (!tempSocket.ExecucuteCommand)
 						{
-							bytes = tempSocket.handler.Receive(socketData);
-							handler = tempSocket.handler;
-							socketUDPWrite = tempSocket.socketUDP;
-							socketUDPRead = tempSocket.socketUDPRead;
-							endPointModel.EndPointUDPWrite = tempSocket.endPointUDP;
-							break;
-						}
-						catch (Exception exc)
-						{
-							if (!tempSocket.handler.Connected)
+							try
 							{
-								sockets.Remove(tempSocket);
+								bytes = tempSocket.handler.Receive(socketData);
+								handler = tempSocket.handler;
+								socketUDPWrite = tempSocket.socketUDP;
+								socketUDPRead = tempSocket.socketUDPRead;
+								endPointModel.EndPointUDPWrite = tempSocket.endPointUDP;
+								break;
 							}
-							if (i == sockets.Count - 1)
+							catch (Exception exc)
 							{
-								throw;
+								if (!tempSocket.handler.Connected)
+								{
+									sockets.Remove(tempSocket);
+								}
+								if (i == sockets.Count - 1)
+								{
+									throw;
+								}
 							}
 						}
 					}
@@ -176,10 +180,24 @@ namespace ServerSocket.Helpers
 					if (builder.ToString().Contains("\r\n"))
 						break;
 				}
-				while (handler.Connected && !builder.ToString().Contains("\r\n"));
-				var commandString = builder.ToString();
-
-				commandExecuter.ExecuteCommand(handler, commandParser.ParseCommand(commandString), socketUDPWrite, socketUDPRead, endPointModel);
+				while (handler.Connected && !builder.ToString().Contains("\r\n") && !sockets.Any(x => x.ExecucuteCommand));
+				if (builder.ToString().Contains("\r\n"))
+				{
+					var commandString = builder.ToString();
+					sockets.First(x => x.handler == handler).Command = commandString;
+					sockets.First(x => x.handler == handler).ExecucuteCommand = true;
+				}
+				if(sockets.Any(x => x.ExecucuteCommand))
+				{
+					var executed = sockets.Where(x => x.ExecucuteCommand);
+					foreach (var tempSocket in executed)
+					{
+						if (!commandExecuter.ContinueExecuteCommand(tempSocket, commandParser.ParseCommand(tempSocket.Command)))
+						{
+							sockets.First(x => x == tempSocket).ExecucuteCommand = false;
+						}
+					}
+				}
 				if (!handler.Connected)
 				{
 					break;
@@ -204,7 +222,7 @@ namespace ServerSocket.Helpers
 				EndPointUDPRead = endPointModel.EndPointUDPRead,
 				EndPointUDPWrite = socketsModel.endPointUDP
 			};
-
+		
 			while (true)
 			{
 				while (threadHandler.Connected)

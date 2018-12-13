@@ -15,5 +15,9 @@ namespace ClientSocket.Models
 		public Socket socketUDPRead { get; set; }
 
 		public EndPoint endPointUDP { get; set; }
+
+		public bool ExecucuteCommand { get; set; }
+
+		public string Command { get; set; }
 	}
 }

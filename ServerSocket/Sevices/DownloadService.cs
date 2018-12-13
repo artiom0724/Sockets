@@ -21,7 +21,7 @@ namespace ServerSocket.Sevices
         private EndPoint endPoint;
 
 
-        public void DownloadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type)
+        public void DownloadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type, bool completeExecute = false)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
@@ -80,6 +80,47 @@ namespace ServerSocket.Sevices
                 Console.WriteLine(ex);
             }
         }
+
+		public bool ContinueExecute(Socket _handler, EndPoint _endPointUDP, Socket _socketUDP, ServerCommand _command, ProtocolType type)
+		{
+			this.socket = _handler;
+			this.socketUDP = _socketUDP;
+			this.endPoint = _endPointUDP;
+
+			switch (type)
+			{
+				case ProtocolType.Tcp:
+					DownloadFileTCP(_command);
+					return true;
+				case ProtocolType.Udp:
+					return DownloadFileUDPContinue(_command);
+			}
+			return false;
+		}
+
+		List<FileModel> fileModels = new List<FileModel>();
+
+		private bool DownloadFileUDPContinue(ServerCommand command)
+		{
+			var file = File.OpenRead(command.Parameters.First());
+
+			var fileModel = fileModels.FirstOrDefault(x => x.socket == socket);
+			if (fileModel == null)
+			{
+				fileModel = new FileModel()
+				{
+					FileName = file.Name,
+					Size = file.Length,
+					PacketNumber = 0
+				};
+				fileModels.Add(fileModel);
+				socket.Send(new byte[4096].InsertInStartArray(Encoding.ASCII.GetBytes($"{file.Length}|")));
+				return false;
+			}
+
+			fileModel.PacketNumber = FirstSending(file, fileModel, fileModel.PacketNumber);
+			return file.Length == fileModel.Packets.Sum(x=>x.Size);
+		}
 
 		private string CheckFileExists(FileStream file)
         {

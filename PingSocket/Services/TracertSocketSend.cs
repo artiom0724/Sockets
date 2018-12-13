@@ -38,6 +38,7 @@ namespace PingSocket.Services
 
 			for (var i = 1; i <= hopsCount; i++)
 			{
+				_timer.Restart();
 				traceRouteDict.Add(i, new List<TracertPingReply>());
 
 				var buffer = new byte[package.Length * 2];
@@ -46,20 +47,24 @@ namespace PingSocket.Services
 					short ttl = 1;
 
 					int receivedByteCount;
-					while (true)
+					while (ttl< 100)
 					{
 						_socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, ttl);
-						ttl++;
 
+						ttl++;
 						_socket.SendTo(package, destination);
 						EndPoint endPoint = new IPEndPoint(IPAddress.Any, 0);
 						try
 						{
 							receivedByteCount = _socket.ReceiveFrom(buffer, ref endPoint);
-						}catch(Exception except)
+						}
+						catch (Exception except)
 						{
 
 						}
+						//if(((IPEndPoint)endPoint).Address.ToString() != "0.0.0.0" )
+						//{
+						//}
 						traceRouteDict[i].Add(new TracertPingReply() {
 							Address = ((IPEndPoint)endPoint).Address,
 							Time = _timer.ElapsedMilliseconds
