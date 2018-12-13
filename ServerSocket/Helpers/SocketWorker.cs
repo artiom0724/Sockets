@@ -193,7 +193,7 @@ namespace ServerSocket.Helpers
 					foreach (var tempSocket in executed)
 					{
 						tempSocket.handler.ReceiveTimeout = 3600000;
-						if (!commandExecuter.ContinueExecuteCommand(tempSocket, commandParser.ParseCommand(tempSocket.Command)))
+						if (commandExecuter.ContinueExecuteCommand(tempSocket, commandParser.ParseCommand(tempSocket.Command)))
 						{
 							sockets.First(x => x == tempSocket).ExecucuteCommand = false;
 						}

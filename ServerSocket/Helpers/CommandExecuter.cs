@@ -54,9 +54,9 @@ namespace ServerSocket.Helpers
 			switch (command.Type)
 			{
 				case CommandType.DownloadUDP:
-					return !downloadService.ContinueExecute(tempSocket.handler, tempSocket.endPointUDP, tempSocket.socketUDP, command, ProtocolType.Udp);
+					return downloadService.ContinueExecute(tempSocket.handler, tempSocket.endPointUDP, tempSocket.socketUDP, command, ProtocolType.Udp);
 				case CommandType.UploadUDP:
-					return !uploadService.ContinueExecute(tempSocket.handler, tempSocket.endPointUDP, tempSocket.socketUDPRead, command, ProtocolType.Udp);
+					return uploadService.ContinueExecute(tempSocket.handler, tempSocket.endPointUDP, tempSocket.socketUDPRead, command, ProtocolType.Udp);
 			}
 			return false;
 		}
