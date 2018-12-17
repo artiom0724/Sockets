@@ -16,12 +16,9 @@ namespace ChatSockets.Models
 			get
 			{
 				var interfaceData = NetworkInterface.GetAllNetworkInterfaces();
-				if (interfaceData == null)
-					Console.WriteLine("Error");
 				foreach (var test in interfaceData)
 				{
-					Console.WriteLine(test.Description);
-					if (test != null && test.NetworkInterfaceType == NetworkInterfaceType.Wireless80211 && test.OperationalStatus == OperationalStatus.Up)
+					if (test != null && test.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
 					{
 						return test.GetIPProperties();
 					}
