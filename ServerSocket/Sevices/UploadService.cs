@@ -12,18 +12,21 @@ using ServerSocket.Models;
 
 namespace ServerSocket.Sevices
 {
-    public class UploadService
-    {
-        private Socket socket;
+	public class UploadService
+	{
+		private Socket socket;
 
-        private Socket socketUDP;
+		private Socket socketUDP;
+		private Socket socketUDPWrite;
 
-            private EndPoint endPoint;
+		private EndPoint endPoint;
+		private EndPoint endPointWrite;
 
-            private EndPoint ipClient;
-            private EndPoint savedClient;
-            private List<FileModel> fileModels = new List<FileModel>();
-            private FileModel udpModel;
+		private EndPoint ipClient;
+		private EndPoint savedClient;
+		private List<FileModel> fileModels = new List<FileModel>();
+		private FileModel udpModel;
+	
 
         public void UploadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type, bool completeCommand = false)
         {
@@ -45,12 +48,14 @@ namespace ServerSocket.Sevices
 			savedClient = socket.RemoteEndPoint;
         }
 
-		public bool ContinueExecute(Socket _socket, EndPoint _endPoint, Socket _socketUDP, ServerCommand command, ProtocolType type)
+		public bool ContinueExecute(Socket _socket, EndPoint _endPoint, EndPoint _endPointWrite, Socket _socketUDP, Socket _socketUDPWrite, ServerCommand command, ProtocolType type)
 		{
 			this.socket = _socket;
 			this.socketUDP = _socketUDP;
 			this.ipClient = _socket.RemoteEndPoint;
 			this.endPoint = _endPoint;
+			this.endPointWrite = _endPointWrite;
+			this.socketUDPWrite = _socketUDPWrite;
 			switch (type)
 			{
 				case ProtocolType.Tcp:
@@ -75,7 +80,9 @@ namespace ServerSocket.Sevices
 				udpModel = new FileModel()
 				{
 					FileName = file.Name,
-					Size = long.Parse(command.Parameters[1])
+					Size = long.Parse(command.Parameters[1]),
+					socket = socket,
+					fileStream = file
 				};
 				fileModels.Add(udpModel);
 				if (file.Length > 0)
@@ -84,12 +91,30 @@ namespace ServerSocket.Sevices
 					file.Close();
 					File.Delete(fileName);
 					file = File.OpenWrite(fileName);
+					udpModel.fileStream = file;
 				}
 				return false;
 			}
-			file = File.OpenWrite(command.Parameters.First());
+			file = udpModel.fileStream;
+			if (file.Length >= udpModel.Size)
+			{
+				file.Close();
+				return true;
+			}
+			if (udpModel.PacketCount == 16)
+			{
+				udpModel.PacketCount = 0;
+				socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct"), endPointWrite);
+				return (file.Length == udpModel.Size);
+			}
 			FirstDataGetting(file);
-			return (file.Length == udpModel.Size);
+			udpModel.PacketCount++;
+			var filelength = file.Length;
+			if(file.Length >= udpModel.Size)
+			{
+				file.Close();
+			}
+			return (filelength >= udpModel.Size);
 		}
 
 		private void UploadFileTCP(ServerCommand command)
@@ -325,7 +350,7 @@ namespace ServerSocket.Sevices
         private bool FirstDataGetting(FileStream file)
         {
             var receive = DataGetting(file);
-            Console.Write("\rGetting... " + (udpModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / udpModel.Size) + "%");
+            Console.Write("\rGetting... " + (udpModel.Packets.Sum(x => x.Size) * 100 / udpModel.Size) + "%");
             return receive;
         }
 

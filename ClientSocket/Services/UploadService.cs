@@ -15,15 +15,18 @@ namespace ClientSocket.Services
         private Socket socket;
 
         private Socket socketUDP;
+        private Socket socketUDPRead;
 
         private EndPoint endPoint;
+        private EndPoint endPointRead;
 
-        public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint, ProtocolType type)
+        public ActionResult UploadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, Socket socketUDPRead, EndPoint endPoint, EndPoint endPointRead, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
-
+            this.endPointRead = endPointRead;
+			this.socketUDPRead = socketUDPRead;
             switch (type)
             {
                 case ProtocolType.Tcp:
@@ -131,20 +134,15 @@ namespace ClientSocket.Services
 				long packetNumber = 0;
 
 				long partNumber = 0;
-				while (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)
+				while (fileModel.Packets.Sum(x => x.Size) < file.Length)
 				{
-					while (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) < file.Length && partNumber < 16)
+					while (fileModel.Packets.Sum(x => x.Size) < file.Length && partNumber < 16)
 					{
-
 						packetNumber = FirstSending(file, fileModel, packetNumber);
 						partNumber++;
-
 					}
-					while (fileModel.Packets.Any(x => !x.IsCame)
-						&& fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) < file.Length)
-					{
-						ResendingMissingPackets(file, fileModel);
-					}
+					if(!(fileModel.Packets.Sum(x => x.Size) < file.Length))
+						ResendingMissingPackets();
 					partNumber = 0;
 				}
 				var fileLength = file.Length;
@@ -173,37 +171,13 @@ namespace ClientSocket.Services
 			}
 		}
 
-        private void ResendingMissingPackets(FileStream file, FileModel fileModel)
+        private void ResendingMissingPackets()
         {
             var infoCaming = new byte[4096];
-            socket.Receive(infoCaming);
+            socketUDPRead.ReceiveFrom(infoCaming, ref endPointRead);
             if (Encoding.ASCII.GetString(infoCaming).Contains("Correct"))
             {
-                foreach (var packet in fileModel.Packets.Where(x => !x.IsCame))
-                {
-                    packet.IsCame = true;
-                }
                 return;
-            }
-            List<long> infoPackets = GetInfoPacketsNumbers(infoCaming);
-            foreach (var packet in fileModel.Packets.Where(x => infoPackets.Contains(x.Number) && !x.IsCame))
-            {
-                packet.IsCame = true;
-            }
-            foreach (var packet in fileModel.Packets.Where(x => !x.IsCame))
-            {
-                var data = new byte[4096];
-                using (var stream = new PacketWriter())
-                {
-                    stream.Write(packet.Number);
-                    stream.Write(packet.FilePosition);
-                    data.InsertInStartArray(stream.ToByteArray());
-                }
-                file.Seek(packet.FilePosition, SeekOrigin.Begin);
-                file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
-                socketUDP.SendTo(data, endPoint);
-                packet.IsCame = true;
-                Console.Write("\rReupload UDP... " + fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size + "%");
             }
         }
 

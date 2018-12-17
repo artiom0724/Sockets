@@ -54,9 +54,23 @@ namespace ServerSocket.Helpers
 			switch (command.Type)
 			{
 				case CommandType.DownloadUDP:
-					return downloadService.ContinueExecute(tempSocket.handler, tempSocket.endPointUDP, tempSocket.socketUDP, command, ProtocolType.Udp);
+					return downloadService.ContinueExecute(tempSocket.handler, tempSocket.EndPointUDPWrite, tempSocket.EndPointUDPRead, tempSocket.socketUDP, tempSocket.socketUDPRead, command, ProtocolType.Udp);
 				case CommandType.UploadUDP:
-					return uploadService.ContinueExecute(tempSocket.handler, tempSocket.endPointUDP, tempSocket.socketUDPRead, command, ProtocolType.Udp);
+					return uploadService.ContinueExecute(tempSocket.handler, tempSocket.EndPointUDPRead, tempSocket.EndPointUDPWrite, tempSocket.socketUDPRead, tempSocket.socketUDP, command, ProtocolType.Udp);
+			}
+			return false;
+		}
+
+		public bool ContinueExecuteCommandThreading(Socket socket, ServerCommand command, Socket socketUDPWrite, Socket socketUDPRead, TripleEndPointModel endPoint)
+		{
+			switch (command.Type)
+			{
+				case CommandType.DownloadUDP:
+					while(!downloadService.ContinueExecute(socket, endPoint.EndPointUDPWrite, endPoint.EndPointUDPRead, socketUDPWrite, socketUDPRead, command, ProtocolType.Udp));
+					break;
+				case CommandType.UploadUDP:
+					while(!uploadService.ContinueExecute(socket, endPoint.EndPointUDPRead, endPoint.EndPointUDPWrite, socketUDPRead, socketUDPWrite, command, ProtocolType.Udp));
+					break;
 			}
 			return false;
 		}

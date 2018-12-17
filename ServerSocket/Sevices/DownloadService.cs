@@ -19,7 +19,9 @@ namespace ServerSocket.Sevices
         private Socket socketUDP;
 
         private EndPoint endPoint;
+        private EndPoint endPointRead;
 
+		private Socket socketUDPRead;
 
         public void DownloadFile(Socket socket, EndPoint endPoint, Socket socketUDP, ServerCommand command, ProtocolType type, bool completeExecute = false)
         {
@@ -81,11 +83,13 @@ namespace ServerSocket.Sevices
             }
         }
 
-		public bool ContinueExecute(Socket _handler, EndPoint _endPointUDP, Socket _socketUDP, ServerCommand _command, ProtocolType type)
+		public bool ContinueExecute(Socket _handler, EndPoint _endPointUDP, EndPoint _endPointUDPRead, Socket _socketUDP, Socket _socketUDPRead, ServerCommand _command, ProtocolType type)
 		{
 			this.socket = _handler;
 			this.socketUDP = _socketUDP;
 			this.endPoint = _endPointUDP;
+			this.endPointRead = _endPointUDPRead;
+			this.socketUDPRead = _socketUDPRead;
 
 			switch (type)
 			{
@@ -110,16 +114,35 @@ namespace ServerSocket.Sevices
 				fileModel = new FileModel()
 				{
 					FileName = file.Name,
+					socket = socket,
 					Size = file.Length,
-					PacketNumber = 0
+					PacketNumber = 0,
+					PacketCount = 0
 				};
 				fileModels.Add(fileModel);
 				socket.Send(new byte[4096].InsertInStartArray(Encoding.ASCII.GetBytes($"{file.Length}|")));
 				return false;
 			}
-
+			if (file.Length >= fileModel.Size)
+			{
+				file.Close();
+				return true;
+			}
+			if (fileModel.PacketCount == 16)
+			{
+				fileModel.PacketCount = 0;
+				var infoData = new byte[4096];
+				socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
+				return file.Length == fileModel.Packets.Sum(x => x.Size);
+			}
 			fileModel.PacketNumber = FirstSending(file, fileModel, fileModel.PacketNumber);
-			return file.Length == fileModel.Packets.Sum(x=>x.Size);
+			fileModel.PacketCount++;
+			var filelength = file.Length;
+			if (file.Length >= fileModel.Size)
+			{
+				file.Close();
+			}
+			return filelength >= fileModel.Packets.Sum(x=>x.Size);
 		}
 
 		private string CheckFileExists(FileStream file)
@@ -264,7 +287,9 @@ namespace ServerSocket.Sevices
         private long FirstSending(FileStream file, FileModel fileModel, long packetNumber)
         {
             var data = new byte[4096];
-            using (var stream = new PacketWriter())
+			file.Seek(fileModel.Packets.Sum(x => x.Size), SeekOrigin.Begin);
+
+			using (var stream = new PacketWriter())
             {
                 stream.Write(packetNumber);
 				long fileposition = file.Position;
@@ -283,7 +308,7 @@ namespace ServerSocket.Sevices
             file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socketUDP.SendTo(data, endPoint);
             fileModel.Packets.Add(packet);
-            Console.Write("\rSending UDP... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\rSending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
     }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
 using ClientSocket.Models;
 
@@ -6,7 +7,9 @@ namespace ClientSocket.Services
 {
     public class FileModel
     {
-        public FileModel()
+		public FileStream fileStream;
+
+		public FileModel()
         {
             Packets = new List<PacketModel>();
         }
@@ -18,6 +21,8 @@ namespace ClientSocket.Services
         public string FileName { get; set; }
 
 		public long PacketNumber { get; set; }
+
+		public long PacketCount { get; set; }
 
         public List<PacketModel> Packets { get; set; }
     }

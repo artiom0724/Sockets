@@ -15,19 +15,22 @@ namespace ClientSocket.Services
         private Socket socket;
 
         private Socket socketUDP;
+        private Socket socketUDPWrite;
 
         private EndPoint endPoint;
+        private EndPoint endPointWrite;
 
         private EndPoint ipClient;
 
         private FileModel fileModel;
 
-
-        public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, EndPoint endPoint, ProtocolType type)
+        public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, Socket _socketUDPWrite, EndPoint endPoint, EndPoint endPointWrite, ProtocolType type)
         {
             this.socket = socket;
             this.socketUDP = socketUDP;
             this.endPoint = endPoint;
+            this.endPointWrite = endPointWrite;
+			this.socketUDPWrite = _socketUDPWrite;
             var returning = new ActionResult();
             switch (type)
             {
@@ -181,28 +184,17 @@ namespace ClientSocket.Services
                     file = File.OpenWrite(fileName);
                 }
                 var countCamingPackets = 0;
-                var countErrors = 0;
                 while (fileModel.Packets.Sum(x => x.Size) < fileModel.Size)
                 {
                     do
                     {
-                        var result = FirstDataGetting(file);
-                        if (result)
+                        if (FirstDataGetting(file))
                         {
                             countCamingPackets++;
                         }
-                        else
-                        {
-                            countErrors++;
-                        }
-                    } while (countErrors < 5 && countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
-                    countErrors = 0;
-                    while (countCamingPackets != 16 && file.Length < fileModel.Size )
-                    {
-                        RegettingMissingPackets(file, ref countCamingPackets);
-                    }
+                    } while (countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
-                    socket.Send(Encoding.ASCII.GetBytes("Correct|"));
+                    socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPointWrite);
                 }
                 var fileLength = file.Length;
                 file.Close();
@@ -309,7 +301,7 @@ namespace ClientSocket.Services
         private bool FirstDataGetting(FileStream file)
         {
             var returning = DataGetting(file);
-            Console.Write("\rGetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\rGetting... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return returning;
         }
     }

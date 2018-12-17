@@ -148,27 +148,24 @@ namespace ServerSocket.Helpers
 					for (var i = 0; i < notExecuting.Count; i++)
 					{
 						var tempSocket = notExecuting.ElementAt(i);
-						if (!tempSocket.ExecucuteCommand)
+						try
 						{
-							try
+							bytes = tempSocket.handler.Receive(socketData);
+							handler = tempSocket.handler;
+							socketUDPWrite = tempSocket.socketUDP;
+							socketUDPRead = tempSocket.socketUDPRead;
+							endPointModel.EndPointUDPWrite = tempSocket.EndPointUDPWrite;
+							break;
+						}
+						catch (Exception exc)
+						{
+							if (!tempSocket.handler.Connected)
 							{
-								bytes = tempSocket.handler.Receive(socketData);
-								handler = tempSocket.handler;
-								socketUDPWrite = tempSocket.socketUDP;
-								socketUDPRead = tempSocket.socketUDPRead;
-								endPointModel.EndPointUDPWrite = tempSocket.endPointUDP;
-								break;
+								sockets.Remove(tempSocket);
 							}
-							catch (Exception exc)
+							if (i == sockets.Count - 1)
 							{
-								if (!tempSocket.handler.Connected)
-								{
-									sockets.Remove(tempSocket);
-								}
-								if (i == sockets.Count - 1)
-								{
-									throw;
-								}
+								throw;
 							}
 						}
 					}
@@ -192,12 +189,10 @@ namespace ServerSocket.Helpers
 					var executed = sockets.Where(x => x.ExecucuteCommand);
 					foreach (var tempSocket in executed)
 					{
-						tempSocket.handler.ReceiveTimeout = 3600000;
 						if (commandExecuter.ContinueExecuteCommand(tempSocket, commandParser.ParseCommand(tempSocket.Command)))
 						{
 							sockets.First(x => x == tempSocket).ExecucuteCommand = false;
 						}
-						tempSocket.handler.ReceiveTimeout = 5000;
 					}
 				}
 				if (!handler.Connected)
@@ -222,7 +217,7 @@ namespace ServerSocket.Helpers
 			{
 				EndPoint = threadHandler.LocalEndPoint,
 				EndPointUDPRead = endPointModel.EndPointUDPRead,
-				EndPointUDPWrite = socketsModel.endPointUDP
+				EndPointUDPWrite = socketsModel.EndPointUDPWrite
 			};
 		
 			while (true)
@@ -250,8 +245,8 @@ namespace ServerSocket.Helpers
 							break;
 					}while (threadHandler.Connected && !builder.ToString().Contains("\r\n"));
 					var commandString = builder.ToString();
-
-					threadCommandExecuter.ExecuteCommand(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketsModel.socketUDPRead, threadTripleEndPointModel);
+					threadHandler.ReceiveTimeout = 500000;
+					threadCommandExecuter.ContinueExecuteCommandThreading(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketsModel.socketUDPRead, threadTripleEndPointModel);
 					if (!threadHandler.Connected)
 					{
 						return;
@@ -273,7 +268,8 @@ namespace ServerSocket.Helpers
 					{
 						handler = threadHandler,
 						socketUDP = socketUDPWrite,
-						endPointUDP = endPointModel.EndPointUDPWrite,
+						EndPointUDPWrite = endPointModel.EndPointUDPWrite,
+						EndPointUDPRead = endPointModel.EndPointUDPRead,
 						socketUDPRead = socketUDPRead
 					});
 				}
@@ -294,7 +290,8 @@ namespace ServerSocket.Helpers
 					{
 						handler = handler,
 						socketUDP = socketUDPWrite,
-						endPointUDP = endPointModel.EndPointUDPWrite,
+						EndPointUDPWrite = endPointModel.EndPointUDPWrite,
+						EndPointUDPRead = endPointModel.EndPointUDPRead,
 						socketUDPRead = socketUDPRead
 					});
 				}

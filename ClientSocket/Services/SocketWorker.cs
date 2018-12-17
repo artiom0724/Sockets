@@ -56,11 +56,12 @@ namespace ClientSocket.Services
         {
             var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
             var parameters = GetParameters($"client_download{parameterType} {fileName}\r\n");
-            if(parameters.Contains("Error"))
+			socket.ReceiveTimeout = 3600000;
+			if (parameters.Contains("Error"))
             {
                 return new ActionResult();
             }
-            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDPRead, endPointModel.EndPointUDPRead, type);
+            var returning = downloadService.DownloadFile(fileName, parameters, socket, socketUDPRead, socketUDPWrite, endPointModel.EndPointUDPRead, endPointModel.EndPointUDPWrite, type);
             return returning;
         }
 
@@ -75,7 +76,7 @@ namespace ClientSocket.Services
             {
                 return new ActionResult();
             }
-            return uploadService.UploadFile(fileName, parameters, socket, socketUDPWrite, endPointModel.EndPointUDPWrite, type);
+            return uploadService.UploadFile(fileName, parameters, socket, socketUDPWrite,socketUDPRead, endPointModel.EndPointUDPWrite, endPointModel.EndPointUDPRead, type);
         }
 
         private string[] GetParameters(string command, ProtocolType type = ProtocolType.Tcp)
