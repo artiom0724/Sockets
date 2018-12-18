@@ -144,6 +144,10 @@ namespace ClientSocket.Services
 					if(!(fileModel.Packets.Sum(x => x.Size) < file.Length))
 						ResendingMissingPackets();
 					partNumber = 0;
+					if (!socket.Connected)
+					{
+						socket.Connect(socket.RemoteEndPoint);
+					}
 				}
 				var fileLength = file.Length;
 				file.Close();

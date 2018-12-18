@@ -77,7 +77,7 @@ namespace ServerSocket.Helpers
 				case CommandType.UploadUDP:
 					while (true)
 					{
-						if(uploadService.ContinueExecute(socket, endPoint.EndPointUDPRead, endPoint.EndPointUDPWrite, socketUDPRead, socketUDPWrite, command, ProtocolType.Udp))
+						if (uploadService.ContinueExecute(socket, endPoint.EndPointUDPRead, endPoint.EndPointUDPWrite, socketUDPRead, socketUDPWrite, command, ProtocolType.Udp))
 						{
 							break;
 						}

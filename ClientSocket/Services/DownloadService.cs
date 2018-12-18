@@ -195,7 +195,11 @@ namespace ClientSocket.Services
                     } while (countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
                     socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPointWrite);
-                }
+					if (!socket.Connected)
+					{
+						socket.Connect(socket.RemoteEndPoint);
+					}
+				}
                 var fileLength = file.Length;
                 file.Close();
                 return new ActionResult()
