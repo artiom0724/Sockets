@@ -181,7 +181,7 @@ namespace ServerSocket.Sevices
             file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socket.Send(data);
             fileModel.Packets.Add(packet);
-            Console.Write("\rSending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\tSending... " + (fileModel.Packets.Where(x => x.IsSend).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
 
@@ -257,7 +257,7 @@ namespace ServerSocket.Sevices
                 data.InsertInStartArray(stream.ToByteArray());
             }
             DataSending(file, fileModel, packet, data);
-            Console.Write("\rResending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
+            Console.Write("\tResending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size));
         }
 
         private void DataSending(FileStream file, FileModel fileModel, PacketModel packet, byte[] data)
@@ -311,7 +311,7 @@ namespace ServerSocket.Sevices
             file.Read(data, 2 * sizeof(long), data.Length - 2 * sizeof(long));
             socketUDP.SendTo(data, endPoint);
             fileModel.Packets.Add(packet);
-            Console.Write("\rSending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\tSending UDP... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return packetNumber;
         }
     }

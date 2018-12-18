@@ -268,7 +268,7 @@ namespace ServerSocket.Helpers
 					ExecucuteCommand = false
 				});
 			}
-			Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
+			Console.WriteLine($"\n-----------Connected client with address {handler.RemoteEndPoint.ToString()}----------\n");
 		}
 
 		private void UpdateUdpWriteSocket(Socket _handler = null)
