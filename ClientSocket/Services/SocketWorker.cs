@@ -56,7 +56,7 @@ namespace ClientSocket.Services
         {
             var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
             var parameters = GetParameters($"client_download{parameterType} {fileName}\r\n");
-			socket.ReceiveTimeout = 3600000;
+			socket.ReceiveTimeout = 0;
 			if (parameters.Contains("Error"))
             {
                 return new ActionResult();

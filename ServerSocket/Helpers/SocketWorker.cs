@@ -245,7 +245,7 @@ namespace ServerSocket.Helpers
 							break;
 					}while (threadHandler.Connected && !builder.ToString().Contains("\r\n"));
 					var commandString = builder.ToString();
-					threadHandler.ReceiveTimeout = 500000;
+					threadHandler.ReceiveTimeout = 0;
 					threadCommandExecuter.ContinueExecuteCommandThreading(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketsModel.socketUDPRead, threadTripleEndPointModel);
 					if (!threadHandler.Connected)
 					{

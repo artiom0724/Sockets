@@ -66,10 +66,22 @@ namespace ServerSocket.Helpers
 			switch (command.Type)
 			{
 				case CommandType.DownloadUDP:
-					while(!downloadService.ContinueExecute(socket, endPoint.EndPointUDPWrite, endPoint.EndPointUDPRead, socketUDPWrite, socketUDPRead, command, ProtocolType.Udp));
+					while (true)
+					{
+						if (downloadService.ContinueExecute(socket, endPoint.EndPointUDPWrite, endPoint.EndPointUDPRead, socketUDPWrite, socketUDPRead, command, ProtocolType.Udp))
+						{
+							break;
+						}
+					};
 					break;
 				case CommandType.UploadUDP:
-					while(!uploadService.ContinueExecute(socket, endPoint.EndPointUDPRead, endPoint.EndPointUDPWrite, socketUDPRead, socketUDPWrite, command, ProtocolType.Udp));
+					while (true)
+					{
+						if(uploadService.ContinueExecute(socket, endPoint.EndPointUDPRead, endPoint.EndPointUDPWrite, socketUDPRead, socketUDPWrite, command, ProtocolType.Udp))
+						{
+							break;
+						}
+					};
 					break;
 			}
 			return false;
