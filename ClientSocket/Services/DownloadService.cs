@@ -162,7 +162,7 @@ namespace ClientSocket.Services
 				IsCame = true,
 				Number = packetNumber
 			});
-			Console.Write("\tDownloading... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+			Console.Write("\rDownloading... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
 			return true;
 		}
 
@@ -237,7 +237,7 @@ namespace ClientSocket.Services
         private bool GettingMissingPackets(FileStream file)
         {
             var returning = DataGetting(file);
-            Console.Write("\tRegetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\rRegetting... " + (fileModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return returning;
         }
 
@@ -301,7 +301,7 @@ namespace ClientSocket.Services
         private bool FirstDataGetting(FileStream file)
         {
             var returning = DataGetting(file);
-            Console.Write("\tGetting... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
+            Console.Write("\rGetting... " + (fileModel.Packets.Sum(x => x.Size) * 100 / fileModel.Size) + "%");
             return returning;
         }
     }

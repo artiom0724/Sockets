@@ -151,7 +151,7 @@ namespace ServerSocket.Helpers
 				{
 					try
 					{
-						sockets.ElementAt(i).handler.ReceiveTimeout = 5000;
+						sockets.ElementAt(i).handler.ReceiveTimeout = 100;
 						bytes = sockets.ElementAt(i).handler.Receive(socketData);
 						sockets.ElementAt(i).handler.ReceiveTimeout = 0;
 						if (bytes > 0)

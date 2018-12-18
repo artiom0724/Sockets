@@ -247,7 +247,7 @@ namespace ServerSocket.Sevices
                 IsCame = true,
                 Number = packetNumber
             });
-            Console.Write("\tGetting... " + (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / model.Size) + "%");
+            Console.Write("\rGetting... " + (model.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / model.Size) + "%");
 			return true;
         }
 
@@ -325,7 +325,7 @@ namespace ServerSocket.Sevices
         private void GettingMissingPackets(FileStream file)
         {
             DataGetting(file);
-            Console.Write("\tRegetting... " + (udpModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / udpModel.Size) + "%");
+            Console.Write("\rRegetting... " + (udpModel.Packets.Where(x => x.IsCame).Sum(x => x.Size) * 100 / udpModel.Size) + "%");
         }
 
         private void SendCamingPackagesNumbers(List<long> camingPackets)
@@ -351,7 +351,7 @@ namespace ServerSocket.Sevices
         private bool FirstDataGetting(FileStream file)
         {
             var receive = DataGetting(file);
-            Console.Write("\tGetting... " + (udpModel.Packets.Sum(x => x.Size) * 100 / udpModel.Size) + "%");
+            Console.Write("\rGetting... " + (udpModel.Packets.Sum(x => x.Size) * 100 / udpModel.Size) + "%");
             return receive;
         }
 
