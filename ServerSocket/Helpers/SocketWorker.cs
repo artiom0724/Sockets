@@ -135,52 +135,46 @@ namespace ServerSocket.Helpers
 				IsNewSocket = false;
 				UpdateSocketsData();
 			}
-			while (true)
+			StringBuilder builder = new StringBuilder();
+			int bytes = 0;
+			byte[] socketData = new byte[256];
+			for (var i = 0; i < sockets.Count; i++)
 			{
-				StringBuilder builder = new StringBuilder();
-				int bytes = 0;
-				byte[] socketData = new byte[256];
-				for (var i = 0; i < sockets.Count; i++)
+				if (sockets.ElementAt(i).ExecucuteCommand)
 				{
-					var tempSocket = sockets.ElementAt(i);
-					if (tempSocket.ExecucuteCommand)
+					if (commandExecuter.ContinueExecuteCommand(sockets.ElementAt(i), commandParser.ParseCommand(sockets.ElementAt(i).Command)))
 					{
-						if (commandExecuter.ContinueExecuteCommand(tempSocket, commandParser.ParseCommand(tempSocket.Command)))
-						{
-							tempSocket.ExecucuteCommand = false;
-						}
-					}
-					else
-					{
-						try
-						{
-							tempSocket.handler.ReceiveTimeout = 5000;
-							bytes = tempSocket.handler.Receive(socketData);
-							tempSocket.handler.ReceiveTimeout = 0;
-							if (bytes > 0)
-							{
-								builder.Append(Encoding.ASCII.GetString(socketData, 0, bytes));
-								bytes = 0;
-							}
-							if (builder.ToString().Contains("\r\n"))
-								break;
-							if (builder.ToString().Contains("\r\n"))
-							{
-								var commandString = builder.ToString();
-								sockets.First(x => x.handler == handler).Command = commandString;
-								sockets.First(x => x.handler == handler).ExecucuteCommand = true;
-							}
-						}
-						catch (Exception exc)
-						{
-							break;
-						}
+						sockets.ElementAt(i).ExecucuteCommand = false;
 					}
 				}
-				if (sockets.Any(x=>!x.handler.Connected))
+				else
 				{
-					sockets.RemoveAll(x => !x.handler.Connected);
+					try
+					{
+						sockets.ElementAt(i).handler.ReceiveTimeout = 5000;
+						bytes = sockets.ElementAt(i).handler.Receive(socketData);
+						sockets.ElementAt(i).handler.ReceiveTimeout = 0;
+						if (bytes > 0)
+						{
+							builder.Append(Encoding.ASCII.GetString(socketData, 0, bytes));
+							bytes = 0;
+						}
+						if (builder.ToString().Contains("\r\n"))
+						{
+							var commandString = builder.ToString();
+							sockets.ElementAt(i).Command = commandString;
+							sockets.ElementAt(i).ExecucuteCommand = true;
+							builder.Clear();
+						}
+					}
+					catch (Exception exc)
+					{
+					}
 				}
+			}
+			if (sockets.Any(x => !x.handler.Connected))
+			{
+				sockets.RemoveAll(x => !x.handler.Connected);
 			}
 		}
 
@@ -252,7 +246,8 @@ namespace ServerSocket.Helpers
 						socketUDP = socketUDPWrite,
 						EndPointUDPWrite = endPointModel.EndPointUDPWrite,
 						EndPointUDPRead = endPointModel.EndPointUDPRead,
-						socketUDPRead = socketUDPRead
+						socketUDPRead = socketUDPRead,
+						ExecucuteCommand = false
 					});
 				}
 				Console.WriteLine($"Connected client with address {threadHandler.RemoteEndPoint.ToString()}");
@@ -261,30 +256,25 @@ namespace ServerSocket.Helpers
 
 		private void UpdateSocketsData()
 		{
-			if (handler.Connected)
+			if (!sockets.Any(x=>x.handler == handler))
 			{
-				UpdateUdpWriteSocket();
-				ConnectUdpSockets();
-
-				if (!sockets.Select(x => x.handler.RemoteEndPoint).Contains(handler.RemoteEndPoint))
+				sockets.Add(new MultiSocketModel()
 				{
-					sockets.Add(new MultiSocketModel()
-					{
-						handler = handler,
-						socketUDP = socketUDPWrite,
-						EndPointUDPWrite = endPointModel.EndPointUDPWrite,
-						EndPointUDPRead = endPointModel.EndPointUDPRead,
-						socketUDPRead = socketUDPRead
-					});
-				}
-				Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
+					handler = handler,
+					socketUDP = CreateSocket(ProtocolType.Udp),
+					EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(handler.RemoteEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 200)),
+					EndPointUDPRead = new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 1)),
+					socketUDPRead = CreateSocket(ProtocolType.Udp, new IPEndPoint(((IPEndPoint)(handler.LocalEndPoint)).Address, (((IPEndPoint)(handler.RemoteEndPoint)).Port + 1))),
+					ExecucuteCommand = false
+				});
 			}
+			Console.WriteLine($"Connected client with address {handler.RemoteEndPoint.ToString()}");
 		}
 
 		private void UpdateUdpWriteSocket(Socket _handler = null)
 		{
 			_handler = _handler ?? handler;
-			endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(_handler.RemoteEndPoint)).Address, (((IPEndPoint)(_handler.RemoteEndPoint)).Port + 2));
+			endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(_handler.RemoteEndPoint)).Address, (((IPEndPoint)(_handler.RemoteEndPoint)).Port + 200));
 			socketUDPWrite = CreateSocket(ProtocolType.Udp);
 		}
 

@@ -85,13 +85,13 @@ namespace ChatSockets
 			else
 			{
 				_socket.SendTo(input.StringToByteArray(),
-					new IPEndPoint(_currentMulticastGroup ?? IpUtils.BroadcastAddress, 1234));
+					new IPEndPoint(_currentMulticastGroup ?? IpUtils.BroadcastAddress, 27000));
 			}
 		}
 
 		private void ReceiveMessage()
 		{
-			EndPoint endPoint = new IPEndPoint(IPAddress.Any, 1234);
+			EndPoint endPoint = new IPEndPoint(IPAddress.Any, 27000);
 			try
 			{
 				_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
@@ -106,7 +106,7 @@ namespace ChatSockets
 				if (_socket.Available > 0)
 				{
 					var buf = new byte[_socket.Available];
-					endPoint = new IPEndPoint(IPAddress.Any, 1234);
+					endPoint = new IPEndPoint(IPAddress.Any, 27000);
 					_socket.ReceiveFrom(buf, ref endPoint);
 					ShowMessage($"{((IPEndPoint)endPoint).Address}-user say: {buf.ByteArrayToString().TrimEnd()}");
 				}

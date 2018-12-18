@@ -32,7 +32,7 @@ namespace ClientSocket.Services
                     EndPoint = new IPEndPoint(IPAddress.Parse(ip), int.Parse(port)),
                 };
                 socket.Connect(endPointModel.EndPoint);
-                endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 2));
+                endPointModel.EndPointUDPRead = new IPEndPoint(((IPEndPoint)(socket.LocalEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 200));
                 endPointModel.EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(socket.RemoteEndPoint)).Address, (((IPEndPoint)(socket.LocalEndPoint)).Port + 1));
                 socketUDPWrite = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 socketUDPRead = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
