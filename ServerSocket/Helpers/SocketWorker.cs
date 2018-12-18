@@ -133,71 +133,53 @@ namespace ServerSocket.Helpers
 			if (IsNewSocket)
 			{
 				IsNewSocket = false;
-				handler.ReceiveTimeout = 5000;
 				UpdateSocketsData();
 			}
-			while (handler.Connected)
+			while (true)
 			{
 				StringBuilder builder = new StringBuilder();
 				int bytes = 0;
 				byte[] socketData = new byte[256];
-
-				do
+				for (var i = 0; i < sockets.Count; i++)
 				{
-					var notExecuting = sockets.Where(x => !x.ExecucuteCommand).ToList();
-					for (var i = 0; i < notExecuting.Count; i++)
-					{
-						var tempSocket = notExecuting.ElementAt(i);
-						try
-						{
-							bytes = tempSocket.handler.Receive(socketData);
-							handler = tempSocket.handler;
-							socketUDPWrite = tempSocket.socketUDP;
-							socketUDPRead = tempSocket.socketUDPRead;
-							endPointModel.EndPointUDPWrite = tempSocket.EndPointUDPWrite;
-							break;
-						}
-						catch (Exception exc)
-						{
-							if (!tempSocket.handler.Connected)
-							{
-								sockets.Remove(tempSocket);
-							}
-							if (i == sockets.Count - 1)
-							{
-								throw;
-							}
-						}
-					}
-					if (bytes > 0)
-					{
-						builder.Append(Encoding.ASCII.GetString(socketData, 0, bytes));
-						bytes = 0;
-					}
-					if (builder.ToString().Contains("\r\n"))
-						break;
-				}
-				while (handler.Connected && !builder.ToString().Contains("\r\n") && !sockets.Any(x => x.ExecucuteCommand));
-				if (builder.ToString().Contains("\r\n"))
-				{
-					var commandString = builder.ToString();
-					sockets.First(x => x.handler == handler).Command = commandString;
-					sockets.First(x => x.handler == handler).ExecucuteCommand = true;
-				}
-				if(sockets.Any(x => x.ExecucuteCommand))
-				{
-					var executed = sockets.Where(x => x.ExecucuteCommand);
-					foreach (var tempSocket in executed)
+					var tempSocket = sockets.ElementAt(i);
+					if (tempSocket.ExecucuteCommand)
 					{
 						if (commandExecuter.ContinueExecuteCommand(tempSocket, commandParser.ParseCommand(tempSocket.Command)))
 						{
-							sockets.First(x => x == tempSocket).ExecucuteCommand = false;
+							tempSocket.ExecucuteCommand = false;
+						}
+					}
+					else
+					{
+						try
+						{
+							tempSocket.handler.ReceiveTimeout = 5000;
+							bytes = tempSocket.handler.Receive(socketData);
+							tempSocket.handler.ReceiveTimeout = 0;
+							if (bytes > 0)
+							{
+								builder.Append(Encoding.ASCII.GetString(socketData, 0, bytes));
+								bytes = 0;
+							}
+							if (builder.ToString().Contains("\r\n"))
+								break;
+							if (builder.ToString().Contains("\r\n"))
+							{
+								var commandString = builder.ToString();
+								sockets.First(x => x.handler == handler).Command = commandString;
+								sockets.First(x => x.handler == handler).ExecucuteCommand = true;
+							}
+						}
+						catch (Exception exc)
+						{
+							break;
 						}
 					}
 				}
-				if (!handler.Connected)
+				if (sockets.Any(x=>!x.handler.Connected))
 				{
-					break;
+					sockets.RemoveAll(x => !x.handler.Connected);
 				}
 			}
 		}
