@@ -112,6 +112,7 @@ namespace ServerSocket.Sevices
 			var filelength = file.Length;
 			if(file.Length >= udpModel.Size)
 			{
+				fileModels.Remove(udpModel);	
 				file.Close();
 			}
 			return (filelength >= udpModel.Size);

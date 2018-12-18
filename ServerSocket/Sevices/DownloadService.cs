@@ -106,9 +106,8 @@ namespace ServerSocket.Sevices
 
 		private bool DownloadFileUDPContinue(ServerCommand command)
 		{
-
 			var fileModel = fileModels.FirstOrDefault(x => x.socket == socket);
-			var file = fileModel == null? File.OpenRead(command.Parameters.First()) : fileModel.fileStream ?? File.OpenRead(command.Parameters.First());
+			var file = fileModel == null? File.OpenRead(command.Parameters.First()) : fileModel.fileStream;
 			if (fileModel == null)
 			{
 				fileModel = new FileModel()
@@ -124,8 +123,9 @@ namespace ServerSocket.Sevices
 				socket.Send(new byte[4096].InsertInStartArray(Encoding.ASCII.GetBytes($"{file.Length}|")));
 				return false;
 			}
-			if (file.Length  <= fileModel.Packets.Sum(x => x.Size))
+			if (file.Length <= fileModel.Packets.Sum(x => x.Size))
 			{
+				fileModels.Remove(fileModel);
 				file.Close();
 				return true;
 			}
@@ -139,11 +139,13 @@ namespace ServerSocket.Sevices
 			fileModel.PacketNumber = FirstSending(file, fileModel, fileModel.PacketNumber);
 			fileModel.PacketCount++;
 			var filelength = file.Length;
-			if (file.Length <= fileModel.Packets.Sum(x => x.Size))
+			var resultSize = fileModel.Packets.Sum(x => x.Size);
+			if (file.Length <= resultSize)
 			{
+				fileModels.Remove(fileModel);
 				file.Close();
 			}
-			return filelength <= fileModel.Packets.Sum(x=>x.Size);
+			return filelength <= resultSize;
 		}
 
 		private string CheckFileExists(FileStream file)

@@ -70,7 +70,7 @@ namespace ClientSocket.Services
             var file = File.OpenRead(fileName);
             var parameterType = type == ProtocolType.Udp ? "_udp" : string.Empty;
             var parameters = GetParameters($"client_upload{parameterType} {fileName} {file.Length}\r\n", type);
-			socket.ReceiveTimeout = 3600000;
+			socket.ReceiveTimeout = 0;
 			file.Close();
             if (parameters.Contains("Error"))
             {

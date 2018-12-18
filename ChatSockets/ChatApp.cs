@@ -62,12 +62,12 @@ namespace ChatSockets
 
 		private void ParseUserInput(string input)
 		{
-			if (input.StartsWith("conect "))
+			if (input.StartsWith("connect "))
 			{
-				input = input.Replace("conect ", string.Empty).TrimEnd();
+				input = input.Replace("connect ", string.Empty).TrimEnd();
 				if (IPAddress.TryParse(input, out _currentMulticastGroup))
 				{
-					_socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 2);
+					_socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 10);
 					_socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership,
 						new MulticastOption(_currentMulticastGroup));
 				}
@@ -85,15 +85,16 @@ namespace ChatSockets
 			else
 			{
 				_socket.SendTo(input.StringToByteArray(),
-					new IPEndPoint(_currentMulticastGroup ?? IpUtils.BroadcastAddress, 27000));
+					new IPEndPoint(_currentMulticastGroup ?? IpUtils.BroadcastAddress, 1234));
 			}
 		}
 
 		private void ReceiveMessage()
 		{
-			EndPoint endPoint = new IPEndPoint(IPAddress.Any, 27000);
+			EndPoint endPoint = new IPEndPoint(IPAddress.Any, 1234);
 			try
 			{
+				_socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, true);
 				_socket.Bind(endPoint);
 			}catch(Exception exc)
 			{
@@ -105,8 +106,8 @@ namespace ChatSockets
 				if (_socket.Available > 0)
 				{
 					var buf = new byte[_socket.Available];
+					endPoint = new IPEndPoint(IPAddress.Any, 1234);
 					_socket.ReceiveFrom(buf, ref endPoint);
-
 					ShowMessage($"{((IPEndPoint)endPoint).Address}-user say: {buf.ByteArrayToString().TrimEnd()}");
 				}
 			}

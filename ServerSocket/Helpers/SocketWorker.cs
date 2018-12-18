@@ -33,8 +33,8 @@ namespace ServerSocket.Helpers
                 try
                 {
                     OpenSockets();
-                    //MonitorPort();
-					MonitorPortThreads();
+                    MonitorPort();
+					//MonitorPortThreads();
 					CloseSockets();
                     Console.WriteLine("\nDisconnect");
                 }
