@@ -268,7 +268,7 @@ namespace ClientSocket.Services
         {
             var data = new byte[4096];
             var received = socketUDP.ReceiveFrom(data, ref endPoint);
-            if (received < 4096)
+            if (received <= 0)
             {
                 return false;
             }

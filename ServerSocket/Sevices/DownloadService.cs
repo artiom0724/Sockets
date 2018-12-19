@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using ClientSocket.Helpers;
 using ClientSocket.Models;
 using ClientSocket.Services;
@@ -138,6 +139,7 @@ namespace ServerSocket.Sevices
 				socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
 				return file.Length == fileModel.Packets.Sum(x => x.Size);
 			}
+			Thread.Sleep(10);
 			fileModel.PacketNumber = FirstSending(file, fileModel, fileModel.PacketNumber);
 			fileModel.PacketCount++;
 			var filelength = file.Length;
