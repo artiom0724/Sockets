@@ -27,7 +27,9 @@ namespace ClientSocket.Services
         public ActionResult DownloadFile(string fileName, string[] parameters, Socket socket, Socket socketUDP, Socket _socketUDPWrite, EndPoint endPoint, EndPoint endPointWrite, ProtocolType type)
         {
             this.socket = socket;
-            this.socketUDP = socketUDP;
+			Console.WriteLine(socket.ReceiveTimeout);
+			Console.WriteLine(socket.SendTimeout);
+			this.socketUDP = socketUDP;
             this.endPoint = endPoint;
             this.endPointWrite = endPointWrite;
 			this.socketUDPWrite = _socketUDPWrite;
@@ -188,6 +190,8 @@ namespace ClientSocket.Services
                 {
                     do
                     {
+						Console.WriteLine(socket.Connected);
+
 						if (!socket.Connected)
 						{
 							Console.WriteLine("this is FACK");
@@ -197,7 +201,8 @@ namespace ClientSocket.Services
                         {
                             countCamingPackets++;
                         }
-                    } while (countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
+						Console.WriteLine(socket.Connected);
+					} while (countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
                     socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPointWrite);
 					if (!socket.Connected)
