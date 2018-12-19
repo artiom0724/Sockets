@@ -130,7 +130,7 @@ namespace ServerSocket.Sevices
 				file.Close();
 				return true;
 			}
-			if (fileModel.PacketCount == Constant.WindowSize)
+			if (fileModel.PacketCount >= Constant.WindowSize)
 			{
 				fileModel.PacketCount = 0;
 				var infoData = new byte[4096];
