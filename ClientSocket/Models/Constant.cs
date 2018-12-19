@@ -6,6 +6,6 @@ namespace ClientSocket.Models
 {
 	public static class Constant
 	{
-		public static int WindowSize = 8;
+		public static int WindowSize = 2;
 	}
 }
