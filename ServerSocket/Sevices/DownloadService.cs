@@ -141,7 +141,7 @@ namespace ServerSocket.Sevices
 				if(!caming.Contains("Correct"))
 				{
 					var missing = long.Parse(caming);
-					fileModel.Packets.RemoveAll(x => x.Number >= missing);
+					fileModel.Packets.RemoveAll(x => x.Number > missing);
 					fileModel.PacketCount = fileModel.Packets.Count % Constant.WindowSize;
 				}
 				return file.Length == fileModel.Packets.Sum(x => x.Size);

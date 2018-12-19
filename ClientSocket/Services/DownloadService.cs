@@ -197,7 +197,9 @@ namespace ClientSocket.Services
 							{
 								countCamingPackets++;
 							}
-						}catch(Exception exc)
+							socketUDP.ReceiveTimeout = 0;
+						}
+						catch(Exception exc)
 						{
 							socketUDPWrite.SendTo(Encoding.ASCII.GetBytes(fileModel.Packets.Last().Number.ToString()), endPointWrite);
 						}

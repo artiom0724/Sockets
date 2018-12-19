@@ -143,7 +143,7 @@ namespace ClientSocket.Services
 					}
 					if (!(fileModel.Packets.Sum(x => x.Size) < file.Length))
 					{
-						ResendingMissingPackets();
+						ResendingMissingPackets(fileModel);
 					}
 					partNumber = 0;
 				}
@@ -173,14 +173,16 @@ namespace ClientSocket.Services
 			}
 		}
 
-        private void ResendingMissingPackets()
+        private void ResendingMissingPackets(FileModel fileModel)
         {
             var infoCaming = new byte[4096];
             socketUDPRead.ReceiveFrom(infoCaming, ref endPointRead);
-            if (Encoding.ASCII.GetString(infoCaming).Contains("Correct"))
+            if (!Encoding.ASCII.GetString(infoCaming).Contains("Correct"))
             {
-                return;
-            }
+				var missing = long.Parse(Encoding.ASCII.GetString(infoCaming));
+				fileModel.Packets.RemoveAll(x => x.Number > missing);
+				fileModel.PacketCount = fileModel.Packets.Count % Constant.WindowSize;
+			}
         }
 
         private static List<long> GetInfoPacketsNumbers(byte[] infoCaming)

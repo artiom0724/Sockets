@@ -107,7 +107,14 @@ namespace ServerSocket.Sevices
 				socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct"), endPointWrite);
 				return (file.Length == udpModel.Size);
 			}
-			FirstDataGetting(file);
+			socketUDP.ReceiveTimeout = 1000;
+			try
+			{
+				FirstDataGetting(file);
+			}catch(Exception exc)
+			{
+				socketUDPWrite.SendTo(Encoding.ASCII.GetBytes(udpModel.Packets.Last().Number.ToString()), endPointWrite);
+			}
 			udpModel.PacketCount++;
 			var filelength = file.Length;
 			if(file.Length >= udpModel.Size)
