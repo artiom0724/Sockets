@@ -190,10 +190,17 @@ namespace ClientSocket.Services
                 {
                     do
                     {
-						if (FirstDataGetting(file))
-                        {
-                            countCamingPackets++;
-                        }
+						socketUDP.ReceiveTimeout = 1000;
+						try
+						{
+							if (FirstDataGetting(file))
+							{
+								countCamingPackets++;
+							}
+						}catch(Exception exc)
+						{
+							socketUDPWrite.SendTo(Encoding.ASCII.GetBytes(fileModel.Packets.Last().Number.ToString()), endPointWrite);
+						}
 					} while (countCamingPackets < Constant.WindowSize && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
 					

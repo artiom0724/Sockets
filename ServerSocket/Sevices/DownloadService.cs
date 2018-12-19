@@ -137,9 +137,15 @@ namespace ServerSocket.Sevices
 				var infoData = new byte[4096];
 				
 				socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
+				var caming = Encoding.ASCII.GetString(infoData);
+				if(!caming.Contains("Correct"))
+				{
+					var missing = long.Parse(caming);
+					fileModel.Packets.RemoveAll(x => x.Number >= missing);
+					fileModel.PacketCount = fileModel.Packets.Count % Constant.WindowSize;
+				}
 				return file.Length == fileModel.Packets.Sum(x => x.Size);
 			}
-			Thread.Sleep(10);
 			fileModel.PacketNumber = FirstSending(file, fileModel, fileModel.PacketNumber);
 			fileModel.PacketCount++;
 			var filelength = file.Length;
