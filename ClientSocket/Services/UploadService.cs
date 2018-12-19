@@ -136,24 +136,17 @@ namespace ClientSocket.Services
 				long partNumber = 0;
 				while (fileModel.Packets.Sum(x => x.Size) < file.Length)
 				{
-					if (!socket.Connected)
-					{
-						Console.WriteLine("this is KEK");
-						socket.Connect(socket.RemoteEndPoint);
-					}
 					while (fileModel.Packets.Sum(x => x.Size) < file.Length && partNumber < 16)
 					{
 						packetNumber = FirstSending(file, fileModel, packetNumber);
 						partNumber++;
 					}
-					if(!(fileModel.Packets.Sum(x => x.Size) < file.Length))
-						ResendingMissingPackets();
-					partNumber = 0;
-					if (!socket.Connected)
+					if (!(fileModel.Packets.Sum(x => x.Size) < file.Length))
 					{
-						Console.WriteLine("this is SPARTA");
-						socket.Connect(socket.RemoteEndPoint);
+						Console.WriteLine("regetting");
+						ResendingMissingPackets();
 					}
+					partNumber = 0;
 				}
 				var fileLength = file.Length;
 				file.Close();

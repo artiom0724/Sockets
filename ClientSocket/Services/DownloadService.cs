@@ -190,26 +190,15 @@ namespace ClientSocket.Services
                 {
                     do
                     {
-						Console.WriteLine(socket.Connected);
-
-						if (!socket.Connected)
-						{
-							Console.WriteLine("this is FACK");
-							socket.Connect(socket.RemoteEndPoint);
-						}
 						if (FirstDataGetting(file))
                         {
                             countCamingPackets++;
                         }
-						Console.WriteLine(socket.Connected);
+						Console.WriteLine(countCamingPackets);
 					} while (countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
-                    socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPointWrite);
-					if (!socket.Connected)
-					{
-						Console.WriteLine("this is CLIENT");
-						socket.Connect(socket.RemoteEndPoint);
-					}
+					
+					socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct"), endPointWrite);
 				}
                 var fileLength = file.Length;
                 file.Close();

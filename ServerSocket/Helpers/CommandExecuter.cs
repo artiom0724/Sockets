@@ -68,7 +68,6 @@ namespace ServerSocket.Helpers
 				case CommandType.DownloadUDP:
 					while (true)
 					{
-						Console.WriteLine(socket.Connected);
 						if (downloadService.ContinueExecute(socket, endPoint.EndPointUDPWrite, endPoint.EndPointUDPRead, socketUDPWrite, socketUDPRead, command, ProtocolType.Udp))
 						{
 							break;

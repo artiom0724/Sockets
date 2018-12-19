@@ -133,6 +133,7 @@ namespace ServerSocket.Sevices
 			{
 				fileModel.PacketCount = 0;
 				var infoData = new byte[4096];
+				Console.WriteLine("receiving");
 				socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
 				return file.Length == fileModel.Packets.Sum(x => x.Size);
 			}
