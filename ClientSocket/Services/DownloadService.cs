@@ -186,22 +186,28 @@ namespace ClientSocket.Services
                     file = File.OpenWrite(fileName);
                 }
                 var countCamingPackets = 0;
+				var isSending = false;
                 while (fileModel.Packets.Sum(x => x.Size) < fileModel.Size)
                 {
                     do
                     {
-						socketUDP.ReceiveTimeout = 100000;
+						socketUDP.ReceiveTimeout = 1000;
 						try
 						{
 							if (FirstDataGetting(file))
 							{
 								countCamingPackets++;
+								isSending = true;
 							}
 							socketUDP.ReceiveTimeout = 0;
 						}
 						catch(Exception exc)
 						{
-							socketUDPWrite.SendTo(Encoding.ASCII.GetBytes(fileModel.Packets.Last().Number.ToString()), endPointWrite);
+							if (isSending)
+							{
+								isSending = false;
+								socketUDPWrite.SendTo(Encoding.ASCII.GetBytes(fileModel.Packets.Last().Number.ToString()), endPointWrite);
+							}
 						}
 					} while (countCamingPackets < Constant.WindowSize && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
