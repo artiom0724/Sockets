@@ -33,8 +33,8 @@ namespace ServerSocket.Helpers
                 try
                 {
                     OpenSockets();
-                    //MonitorPort();
-					MonitorPortThreads();
+                    MonitorPort();
+					//MonitorPortThreads();
 					CloseSockets();
                     Console.WriteLine("\nDisconnect");
                 }
@@ -150,7 +150,7 @@ namespace ServerSocket.Helpers
 				{
 					try
 					{
-						sockets.ElementAt(i).handler.ReceiveTimeout = 100;
+						sockets.ElementAt(i).handler.ReceiveTimeout = 40;
 						bytes = sockets.ElementAt(i).handler.Receive(socketData);
 						sockets.ElementAt(i).handler.ReceiveTimeout = 0;
 						if (bytes > 0)

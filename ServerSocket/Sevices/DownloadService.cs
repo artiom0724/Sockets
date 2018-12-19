@@ -133,10 +133,19 @@ namespace ServerSocket.Sevices
 			}
 			if (fileModel.PacketCount >= Constant.WindowSize)
 			{
-				fileModel.PacketCount = 0;
 				var infoData = new byte[4096];
-				
-				socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
+				try
+				{
+					socketUDPRead.ReceiveTimeout = 1000;
+					socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
+					socketUDPRead.ReceiveTimeout = 0;
+				}
+				catch(Exception exc)
+				{
+					socketUDPRead.ReceiveTimeout = 0;
+					return false;
+				}
+				fileModel.PacketCount = 0;
 				var caming = Encoding.ASCII.GetString(infoData);
 				if(!caming.Contains("Correct"))
 				{

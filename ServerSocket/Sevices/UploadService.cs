@@ -114,7 +114,9 @@ namespace ServerSocket.Sevices
 			}catch(Exception exc)
 			{
 				socketUDPWrite.SendTo(Encoding.ASCII.GetBytes(udpModel.Packets.Last().Number.ToString()), endPointWrite);
+				return (file.Length >= udpModel.Size);
 			}
+			socketUDP.ReceiveTimeout = 0;
 			udpModel.PacketCount++;
 			var filelength = file.Length;
 			if(file.Length >= udpModel.Size)

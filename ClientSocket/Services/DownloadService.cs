@@ -190,7 +190,7 @@ namespace ClientSocket.Services
                 {
                     do
                     {
-						socketUDP.ReceiveTimeout = 1000;
+						socketUDP.ReceiveTimeout = 100000;
 						try
 						{
 							if (FirstDataGetting(file))
