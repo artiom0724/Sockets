@@ -180,7 +180,7 @@ namespace ClientSocket.Services
             if (!Encoding.ASCII.GetString(infoCaming).Contains("Correct"))
             {
 				var missing = long.Parse(Encoding.ASCII.GetString(infoCaming));
-				fileModel.Packets.RemoveAll(x => x.Number > missing);
+				fileModel.Packets.RemoveAll(x => x.Number >= missing);
 				fileModel.PacketCount = fileModel.Packets.Count % Constant.WindowSize;
 			}
         }
