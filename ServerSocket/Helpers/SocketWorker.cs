@@ -118,7 +118,6 @@ namespace ServerSocket.Helpers
 				try
 				{
 					var threadSocket = socket.Accept();
-					UpdateSocketsData(threadSocket);
 					new Thread(this.MultiThreadingForSocket).Start(threadSocket);
 				}
 				catch (Exception exc)
@@ -183,6 +182,7 @@ namespace ServerSocket.Helpers
 			var threadHandler = (Socket)data;
 			var threadCommandParser = new CommandParser();
 			var threadCommandExecuter = new CommandExecuter();
+			UpdateSocketsData(threadHandler);
 			SocketCommandsListnerRun(threadHandler, threadCommandParser, threadCommandExecuter);
 		}
 
@@ -225,6 +225,7 @@ namespace ServerSocket.Helpers
 					threadCommandExecuter.ContinueExecuteCommandThreading(threadHandler, threadCommandParser.ParseCommand(commandString), socketsModel.socketUDP, socketsModel.socketUDPRead, threadTripleEndPointModel);
 					if (!threadHandler.Connected)
 					{
+						Console.WriteLine("this is SERVER");
 						return;
 					}
 				}
@@ -233,25 +234,19 @@ namespace ServerSocket.Helpers
 
 		private void UpdateSocketsData(Socket threadHandler)
 		{
-			if (threadHandler.Connected)
+			if (!sockets.Any(x => x.handler == threadHandler))
 			{
-				UpdateUdpWriteSocket(threadHandler);
-				ConnectUdpSockets(threadHandler);
-
-				if (!sockets.Select(x => x.handler.RemoteEndPoint).Contains(threadHandler.RemoteEndPoint))
+				sockets.Add(new MultiSocketModel()
 				{
-					sockets.Add(new MultiSocketModel()
-					{
-						handler = threadHandler,
-						socketUDP = socketUDPWrite,
-						EndPointUDPWrite = endPointModel.EndPointUDPWrite,
-						EndPointUDPRead = endPointModel.EndPointUDPRead,
-						socketUDPRead = socketUDPRead,
-						ExecucuteCommand = false
-					});
-				}
-				Console.WriteLine($"Connected client with address {threadHandler.RemoteEndPoint.ToString()}");
+					handler = threadHandler,
+					socketUDP = CreateSocket(ProtocolType.Udp),
+					EndPointUDPWrite = new IPEndPoint(((IPEndPoint)(threadHandler.RemoteEndPoint)).Address, (((IPEndPoint)(threadHandler.RemoteEndPoint)).Port + 200)),
+					EndPointUDPRead = new IPEndPoint(((IPEndPoint)(threadHandler.LocalEndPoint)).Address, (((IPEndPoint)(threadHandler.RemoteEndPoint)).Port + 1)),
+					socketUDPRead = CreateSocket(ProtocolType.Udp, new IPEndPoint(((IPEndPoint)(threadHandler.LocalEndPoint)).Address, (((IPEndPoint)(threadHandler.RemoteEndPoint)).Port + 1))),
+					ExecucuteCommand = false
+				});
 			}
+			Console.WriteLine($"Connected client with address {threadHandler.RemoteEndPoint.ToString()}");
 		}
 
 		private void UpdateSocketsData()

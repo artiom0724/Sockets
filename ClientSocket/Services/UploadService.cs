@@ -136,6 +136,11 @@ namespace ClientSocket.Services
 				long partNumber = 0;
 				while (fileModel.Packets.Sum(x => x.Size) < file.Length)
 				{
+					if (!socket.Connected)
+					{
+						Console.WriteLine("this is KEK");
+						socket.Connect(socket.RemoteEndPoint);
+					}
 					while (fileModel.Packets.Sum(x => x.Size) < file.Length && partNumber < 16)
 					{
 						packetNumber = FirstSending(file, fileModel, packetNumber);
@@ -146,6 +151,7 @@ namespace ClientSocket.Services
 					partNumber = 0;
 					if (!socket.Connected)
 					{
+						Console.WriteLine("this is SPARTA");
 						socket.Connect(socket.RemoteEndPoint);
 					}
 				}

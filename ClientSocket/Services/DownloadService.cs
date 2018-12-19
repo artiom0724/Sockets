@@ -188,7 +188,12 @@ namespace ClientSocket.Services
                 {
                     do
                     {
-                        if (FirstDataGetting(file))
+						if (!socket.Connected)
+						{
+							Console.WriteLine("this is FACK");
+							socket.Connect(socket.RemoteEndPoint);
+						}
+						if (FirstDataGetting(file))
                         {
                             countCamingPackets++;
                         }
@@ -197,6 +202,7 @@ namespace ClientSocket.Services
                     socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct|"), endPointWrite);
 					if (!socket.Connected)
 					{
+						Console.WriteLine("this is CLIENT");
 						socket.Connect(socket.RemoteEndPoint);
 					}
 				}
