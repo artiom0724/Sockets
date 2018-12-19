@@ -143,7 +143,6 @@ namespace ClientSocket.Services
 					}
 					if (!(fileModel.Packets.Sum(x => x.Size) < file.Length))
 					{
-						Console.WriteLine("regetting");
 						ResendingMissingPackets();
 					}
 					partNumber = 0;

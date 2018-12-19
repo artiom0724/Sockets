@@ -195,7 +195,7 @@ namespace ClientSocket.Services
                             countCamingPackets++;
                         }
 						Console.WriteLine(countCamingPackets);
-					} while (countCamingPackets < 16 && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
+					} while (countCamingPackets < Constant.WindowSize && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
 					
 					socketUDPWrite.SendTo(Encoding.ASCII.GetBytes("Correct"), endPointWrite);

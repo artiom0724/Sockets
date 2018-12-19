@@ -8,6 +8,7 @@ using System.Text;
 using ClientSocket.Helpers;
 using ClientSocket.Models;
 using ClientSocket.Services;
+using ServerSocket.Enums;
 using ServerSocket.Models;
 
 namespace ServerSocket.Sevices
@@ -129,11 +130,12 @@ namespace ServerSocket.Sevices
 				file.Close();
 				return true;
 			}
-			if (fileModel.PacketCount == 16)
+			Console.WriteLine("  " + fileModel.PacketCount.ToString());
+			if (fileModel.PacketCount == Constant.WindowSize)
 			{
 				fileModel.PacketCount = 0;
 				var infoData = new byte[4096];
-				Console.WriteLine("receiving");
+				
 				socketUDPRead.ReceiveFrom(infoData, ref endPointRead);
 				return file.Length == fileModel.Packets.Sum(x => x.Size);
 			}
