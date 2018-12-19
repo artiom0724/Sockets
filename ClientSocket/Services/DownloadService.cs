@@ -194,7 +194,6 @@ namespace ClientSocket.Services
                         {
                             countCamingPackets++;
                         }
-						Console.WriteLine(countCamingPackets);
 					} while (countCamingPackets < Constant.WindowSize && fileModel.Packets.Sum(x => x.Size) < fileModel.Size);
                     countCamingPackets = 0;
 					

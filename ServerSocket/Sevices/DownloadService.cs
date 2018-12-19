@@ -130,7 +130,6 @@ namespace ServerSocket.Sevices
 				file.Close();
 				return true;
 			}
-			Console.WriteLine("  " + fileModel.PacketCount.ToString());
 			if (fileModel.PacketCount == Constant.WindowSize)
 			{
 				fileModel.PacketCount = 0;
